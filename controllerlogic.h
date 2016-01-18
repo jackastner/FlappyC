@@ -2,19 +2,18 @@
 #define CONT_LOGIC_H
 
 #include "drawlogic.h"
+#include "gamelogic.h"
+#include <SDL2/SDL.h>
+
+// typedef void (*EVENT_CALLBACK)(void);
 
 typedef struct ControllerState ControllerState;
 
 ControllerState *create_ControllerState();
 void destroy_ControllerState(ControllerState* controller);
 
-int try_controller(GameData* data,ControllerState* controller);
+int run_controller(GameData* data,DrawConfig* config, ControllerState* controller);
 
-void control_game(GameData* data,ControllerState* controller,SDL_Event event);
-void proccese_game_event(GameData* data,ControllerState* controller, SDL_Event event);
-
-void control_menu(GameData* data,ControllerState* controller,SDL_Event event);
-void proccese_menu_event(GameData* data,ControllerState* controller, SDL_Event event);
-
+//SDL_TimerCallback _create_timer_callback(void (*callback)(void))
 
 #endif

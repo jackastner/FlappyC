@@ -1,23 +1,20 @@
 #include "controllerlogic.h"
 #include "gamelogic.h"
+#include "drawlogic.h"
 #include <SDL2/SDL.h>
-#include <time.h>
 
+#include <stdio.h>
 
 struct ControllerState {
     int tick_length;
-    int poll_interval;
-    struct timespec last_user_input;
-    struct timespec last_game_tick;
+    int refresh_rate;
 };
 
 ControllerState *create_ControllerState(){
     ControllerState* controller = malloc(sizeof (ControllerState));
 
-    controller->tick_length = 100000000;
-    controller->poll_interval = 10000;
-    clock_gettime(CLOCK_MONOTONIC, &(controller->last_user_input));
-    clock_gettime(CLOCK_MONOTONIC, &(controller->last_game_tick));
+    controller->tick_length = 1;
+    controller->refresh_rate = 1;
 
     return controller;
 }
@@ -26,81 +23,69 @@ void destroy_ControllerState(ControllerState* controller){
     free(controller);
 }
 
-int try_controller(GameData* data,ControllerState* controller){
-    /*
-     * Quit events need to be handled separately from others events.
-     * assume that SDL has been initialized by the view
-     */
-    SDL_Event event ;
-    SDL_PollEvent(&event);
-    if(event.type == SDL_QUIT){
-        return 0;
+int run_controller(GameData* data,DrawConfig* config, ControllerState* controller){
+  /*
+   * These function pointer give me warnings out my bunghole.
+   *
+  */
+    Uint32 tick_callback(Uint32 interval, void *param){
+        SDL_Event event;
+        SDL_UserEvent userevent;
+        
+        userevent.type = SDL_USEREVENT;
+        userevent.code = 0;
+        userevent.data1 = &update_state;
+        userevent.data2 = data;
+
+        event.type = SDL_USEREVENT;
+        event.user = userevent;
+
+        SDL_PushEvent(&event);
+        return(interval);
     }
 
-    if(!is_gameover(data)){
-        control_game(data,controller,event);
-    } else { 
-        control_menu(data,controller,event);
+    SDL_TimerID tick_timer = SDL_AddTimer(controller->tick_length,tick_callback,NULL);
+
+    // Uint32 refresh_callback(Uint32 interval, void *param){
+    //     SDL_Event event;
+    //     SDL_UserEvent userevent;
+        
+    //     userevent.type = SDL_USEREVENT;
+    //     userevent.code = 0;
+    //     userevent.data1 = &update_state; 
+    //     userevent.data2 = ;
+
+    //     event.type = SDL_USEREVENT;
+    //     event.user = userevent;
+
+    //     SDL_PushEvent(&event);
+    //     return(interval);
+    // }
+    // SDL_TimerID refresh_timer = SDL_AddTimer(controller->refresh_rate,&refresh_callback,NULL);
+
+    SDL_Event event;
+    while (!is_gameover(data)){
+        SDL_PollEvent (&event);
+        if(event.type == SDL_QUIT){
+          break;
+        }
+
+        switch(event.type) {
+            case SDL_USEREVENT: {
+                printf("User event\n");
+                void (*p) (void *, ...) = event.user.data1;
+                p(event.user.data2);
+                break;
+            }
+            case SDL_KEYDOWN: {
+                printf("Key down\n");
+                if(event.key.keysym.sym == SDLK_SPACE){
+                    flap_bird(data);
+                }
+            }
+        }
     }
 
-    return  1;
-}
-
-void control_game(GameData* data,ControllerState* controller,SDL_Event event){
-    /*
-     * Obtain current system time
-     */
-    struct timespec currentTime;
-    clock_gettime(CLOCK_MONOTONIC, &currentTime);
-
-    /*
-     *  Advance game state if enough time has passed.
-     */
-    int update_ellapsed = 1000000000 * (currentTime.tv_sec - controller->last_game_tick.tv_sec) + 
-                          (currentTime.tv_nsec - controller->last_game_tick.tv_nsec);
-    if(update_ellapsed > controller->tick_length){
-        update_state(data);
-        clock_gettime(CLOCK_MONOTONIC, &(controller->last_game_tick));
-    }
-
-    /*
-     * Modify game state based on user input if enough time has passed
-     */
-    int poll_ellapsed = 1000000000 * (currentTime.tv_sec - controller->last_user_input.tv_sec) + 
-                        (currentTime.tv_nsec - controller->last_user_input.tv_nsec);
-    if(poll_ellapsed > controller->poll_interval){
-        proccese_game_event(data,controller,event);
-        clock_gettime(CLOCK_MONOTONIC, &(controller->last_user_input));
-    }
-}
-
-void proccese_game_event(GameData* data,ControllerState* controller, SDL_Event event){
-    if(event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_SPACE){
-        flap_bird(data);
-    }
-}
-
-
-void control_menu(GameData* data,ControllerState* controller, SDL_Event event){
-    /*
-     * Obtain current system time
-     */
-    struct timespec currentTime;
-    clock_gettime(CLOCK_MONOTONIC, &currentTime);
-
-    /*
-     * Modify game state based on user input if enough time has passed
-     */
-    int poll_ellapsed = 1000000000 * (currentTime.tv_sec - controller->last_user_input.tv_sec) + 
-                        (currentTime.tv_nsec - controller->last_user_input.tv_nsec);
-    if(poll_ellapsed > controller->poll_interval){
-        proccese_menu_event(data,controller,event);
-        clock_gettime(CLOCK_MONOTONIC, &(controller->last_user_input));
-    }
-}
-
-void proccese_menu_event(GameData* data,ControllerState* controller, SDL_Event event){
-    if(event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_SPACE){
-        reset_state(data);
-    }
+    SDL_RemoveTimer(tick_timer);
+    //SDL_RemoveTimer(refresh_timer);
 }

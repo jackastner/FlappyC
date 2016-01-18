@@ -8,9 +8,9 @@ int main(int argc, char** argv){
     GameData* data = create_GameData();
     ControllerState* controller = create_ControllerState();
 
-    while(try_controller(data,controller)){
-        render_game(data,config);
-    }
+    printf("Start\n");
+    run_controller(data, config, controller);
+    printf("End\n");
 
     destroy_DrawConfig(config);
     destroy_GameData(data);

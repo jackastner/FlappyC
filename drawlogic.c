@@ -43,20 +43,20 @@ DrawConfig *create_DrawConfig(){
     /*
      * Set the windows title
      */
-    SDL_SetWindowTitle(config->window,"Flappy Brid");
+    SDL_SetWindowTitle(config->window,"Flappy Bird");
 
     /*
      * Load image files using SDL_image.
      */
-    config->bird_texture = IMG_LoadTexture(config->renderer,"resources/bird.png");
-    config->background_texture = IMG_LoadTexture(config->renderer,"resources/background.png");
-    config->pipe_texture = IMG_LoadTexture(config->renderer,"resources/pipe.png");
-    config->pipe_top_texture = IMG_LoadTexture(config->renderer,"resources/pipe-top.png");
+    config->bird_texture = IMG_LoadTexture(config->renderer,"resources/images/bird.png");
+    config->background_texture = IMG_LoadTexture(config->renderer,"resources/images/background.png");
+    config->pipe_texture = IMG_LoadTexture(config->renderer,"resources/images/pipe.png");
+    config->pipe_top_texture = IMG_LoadTexture(config->renderer,"resources/images/pipe-top.png");
 
     /*
      * Load font using TTF_Font
      */
-    config->game_font = TTF_OpenFont("VeraMono.ttf",24);
+    config->game_font = TTF_OpenFont("resources/fonts/VeraMono.ttf",24);
 
     return config;
 }

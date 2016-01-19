@@ -30,34 +30,63 @@ DrawConfig *create_DrawConfig(){
     /*
      * Initialize SDL and related libraries.
      */
-    SDL_Init(SDL_INIT_EVERYTHING);
-    IMG_Init(IMG_INIT_PNG);
-    TTF_Init();
-
+    if(SDL_Init(SDL_INIT_EVERYTHING) < 0){
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"SDL_Init failed: %s\n",SDL_GetError());
+    }
+    if(IMG_Init(IMG_INIT_PNG) != IMG_INIT_PNG){
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"IMG_Init for IMG_INIT_PNG failed %s\n",IMG_GetError());
+    }  
+    if(TTF_Init() == -1){
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"TTF_Init faled %s\n",TTF_GetError());
+    }
 
     /*
      * create and initialize SDL resources.
      */
-    SDL_CreateWindowAndRenderer(config->window_width,config->window_height,0,&(config->window),&(config->renderer));
+    if(SDL_CreateWindowAndRenderer(config->window_width,config->window_height,0,&(config->window),&(config->renderer))){
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"Could not create window and renderer: %s\n",SDL_GetError());
+    }
 
     /*
      * Set the windows title
      */
     SDL_SetWindowTitle(config->window,"Flappy Bird");
-
+    
     /*
      * Load image files using SDL_image.
      */
-    config->bird_texture = IMG_LoadTexture(config->renderer,"resources/images/bird.png");
-    config->background_texture = IMG_LoadTexture(config->renderer,"resources/images/background.png");
-    config->pipe_texture = IMG_LoadTexture(config->renderer,"resources/images/pipe.png");
-    config->pipe_top_texture = IMG_LoadTexture(config->renderer,"resources/images/pipe-top.png");
+    char* bird_path =  "resources/images/bird.png";
+    config->bird_texture = IMG_LoadTexture(config->renderer,bird_path);
+    if(config->bird_texture == NULL){
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"Image at \"%s\" failed to load: %s\n",bird_path,IMG_GetError());
+    } 
+
+    char* background_path = "resources/images/background.png";
+    config->background_texture = IMG_LoadTexture(config->renderer,background_path);
+    if(config->background_texture == NULL){
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"Image at \"%s\" failed to load: %s\n",background_path,IMG_GetError());
+    }
+    
+    char* pipe_path = "resources/images/pipe.png";
+    config->pipe_texture = IMG_LoadTexture(config->renderer,pipe_path);
+    if(config->pipe_texture == NULL){
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"Image at \"%s\" failed to load: %s\n",pipe_path,IMG_GetError());
+    }
+    
+    char* pipetop_path = "resources/images/pipe-top.png";
+    config->pipe_top_texture = IMG_LoadTexture(config->renderer,pipetop_path);
+    if(config->pipe_top_texture == NULL){
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"Image at \"%s\" failed to load: %s\n",pipetop_path,IMG_GetError());
+    }
 
     /*
      * Load font using TTF_Font
      */
-    config->game_font = TTF_OpenFont("resources/fonts/VeraMono.ttf",24);
-
+    char* font_path = "resources/fonts/VeraMono.ttf"; 
+    config->game_font = TTF_OpenFont(font_path,24);
+    if(config->game_font == NULL){
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"Font at \"%s\" failed to load: %s\n",font_path,TTF_GetError());
+    }
     return config;
 }
 

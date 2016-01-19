@@ -29,7 +29,6 @@ int run_controller(GameData* data,DrawConfig* config, ControllerState* controlle
    *
    */
     Uint32 tick_callback(Uint32 interval, void *param){
-        printf("Tick\n");
 
         SDL_Event event;
         SDL_UserEvent userevent;
@@ -75,14 +74,12 @@ int run_controller(GameData* data,DrawConfig* config, ControllerState* controlle
 
             switch(event.type) {
                 case SDL_USEREVENT: {
-                    printf("User event\n");
                     void (*p) (void *, ...) = event.user.data1;
                     p(event.user.data2);
                     break;
                 }
                 case SDL_KEYDOWN: {
                     if(event.key.keysym.sym == SDLK_SPACE){
-                        printf("Flap\n");
                         flap_bird(data);
                     }
                     break;

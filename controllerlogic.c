@@ -5,8 +5,8 @@
 
 
 struct ControllerState {
-    int tick_length;
-    int poll_interval;
+    Uint32 tick_length;
+    Uint32 poll_interval;
     Uint32 last_user_input;
     Uint32 last_game_tick;
 };
@@ -14,8 +14,8 @@ struct ControllerState {
 ControllerState *create_ControllerState(){
     ControllerState* controller = malloc(sizeof (ControllerState));
 
-    controller->tick_length = 300;
-    controller->poll_interval = 0;
+    controller->tick_length = 100;
+    controller->poll_interval = 1;
     controller->last_user_input = 0;
     controller->last_game_tick = 0;
     
@@ -72,7 +72,6 @@ void control_game(GameData* data,ControllerState* controller,SDL_Event event){
 void proccese_game_event(GameData* data,ControllerState* controller, SDL_Event event){
     if(event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_SPACE){
         flap_bird(data);
-        printf("flap\n");
     }
 }
 

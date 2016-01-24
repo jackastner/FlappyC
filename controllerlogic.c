@@ -7,18 +7,18 @@
 struct ControllerState {
     int tick_length;
     int poll_interval;
-    struct timespec last_user_input;
-    struct timespec last_game_tick;
+    Uint32 last_user_input;
+    Uint32 last_game_tick;
 };
 
 ControllerState *create_ControllerState(){
     ControllerState* controller = malloc(sizeof (ControllerState));
 
-    controller->tick_length = 100000000;
-    controller->poll_interval = 10000;
-    clock_gettime(CLOCK_MONOTONIC, &(controller->last_user_input));
-    clock_gettime(CLOCK_MONOTONIC, &(controller->last_game_tick));
-
+    controller->tick_length = 300;
+    controller->poll_interval = 0;
+    controller->last_user_input = 0;
+    controller->last_game_tick = 0;
+    
     return controller;
 }
 
@@ -48,55 +48,49 @@ int try_controller(GameData* data,ControllerState* controller){
 
 void control_game(GameData* data,ControllerState* controller,SDL_Event event){
     /*
-     * Obtain current system time
+     * Obtain current SDL ticks 
      */
-    struct timespec currentTime;
-    clock_gettime(CLOCK_MONOTONIC, &currentTime);
+    Uint32 currentTime = SDL_GetTicks();
 
     /*
      *  Advance game state if enough time has passed.
      */
-    int update_ellapsed = 1000000000 * (currentTime.tv_sec - controller->last_game_tick.tv_sec) + 
-                          (currentTime.tv_nsec - controller->last_game_tick.tv_nsec);
-    if(update_ellapsed > controller->tick_length){
+    if(SDL_TICKS_PASSED(currentTime,controller->last_game_tick + controller->tick_length)){
         update_state(data);
-        clock_gettime(CLOCK_MONOTONIC, &(controller->last_game_tick));
+        controller->last_game_tick = currentTime;
     }
 
     /*
      * Modify game state based on user input if enough time has passed
      */
-    int poll_ellapsed = 1000000000 * (currentTime.tv_sec - controller->last_user_input.tv_sec) + 
-                        (currentTime.tv_nsec - controller->last_user_input.tv_nsec);
-    if(poll_ellapsed > controller->poll_interval){
+    if(SDL_TICKS_PASSED(currentTime,controller->last_user_input + controller->poll_interval)){ 
         proccese_game_event(data,controller,event);
-        clock_gettime(CLOCK_MONOTONIC, &(controller->last_user_input));
+        controller->last_user_input = currentTime;
     }
 }
 
 void proccese_game_event(GameData* data,ControllerState* controller, SDL_Event event){
     if(event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_SPACE){
         flap_bird(data);
+        printf("flap\n");
     }
 }
 
 
 void control_menu(GameData* data,ControllerState* controller, SDL_Event event){
     /*
-     * Obtain current system time
+     * Obtain current SDL ticks 
      */
-    struct timespec currentTime;
-    clock_gettime(CLOCK_MONOTONIC, &currentTime);
+    Uint32 currentTime = SDL_GetTicks();
 
     /*
-     * Modify game state based on user input if enough time has passed
+     * Modify menue state based on user input if enough time has passed
      */
-    int poll_ellapsed = 1000000000 * (currentTime.tv_sec - controller->last_user_input.tv_sec) + 
-                        (currentTime.tv_nsec - controller->last_user_input.tv_nsec);
-    if(poll_ellapsed > controller->poll_interval){
+    if(SDL_TICKS_PASSED(currentTime,controller->last_user_input + controller->poll_interval)){ 
         proccese_menu_event(data,controller,event);
-        clock_gettime(CLOCK_MONOTONIC, &(controller->last_user_input));
+        controller->last_user_input = currentTime;
     }
+
 }
 
 void proccese_menu_event(GameData* data,ControllerState* controller, SDL_Event event){

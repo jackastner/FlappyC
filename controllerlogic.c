@@ -15,7 +15,7 @@ ControllerState *create_ControllerState(){
     ControllerState* controller = malloc(sizeof (ControllerState));
 
     controller->tick_length = 100;
-    controller->poll_interval = 1;
+    controller->poll_interval = 50;
     controller->last_user_input = 0;
     controller->last_game_tick = 0;
     
@@ -31,22 +31,22 @@ int try_controller(GameData* data,ControllerState* controller){
      * Quit events need to be handled separately from others events.
      * assume that SDL has been initialized by the view
      */
-    SDL_Event event ;
-    SDL_PollEvent(&event);
-    if(event.type == SDL_QUIT){
+    SDL_Event event;
+    SDL_PumpEvents();
+    if(SDL_PeepEvents(&event,1,SDL_PEEKEVENT,SDL_QUIT,SDL_QUIT)){
         return 0;
     }
 
     if(!is_gameover(data)){
-        control_game(data,controller,event);
+        control_game(data,controller);
     } else { 
-        control_menu(data,controller,event);
+        control_menu(data,controller);
     }
 
     return  1;
 }
 
-void control_game(GameData* data,ControllerState* controller,SDL_Event event){
+void control_game(GameData* data,ControllerState* controller){
     /*
      * Obtain current SDL ticks 
      */
@@ -64,19 +64,22 @@ void control_game(GameData* data,ControllerState* controller,SDL_Event event){
      * Modify game state based on user input if enough time has passed
      */
     if(SDL_TICKS_PASSED(currentTime,controller->last_user_input + controller->poll_interval)){ 
-        proccese_game_event(data,controller,event);
+        proccese_game_event(data,controller);
         controller->last_user_input = currentTime;
     }
 }
 
-void proccese_game_event(GameData* data,ControllerState* controller, SDL_Event event){
-    if(event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_SPACE){
-        flap_bird(data);
+void proccese_game_event(GameData* data,ControllerState* controller){
+    SDL_Event event;
+    while(SDL_PeepEvents(&event,1,SDL_GETEVENT,SDL_KEYDOWN,SDL_KEYDOWN)){
+        if(event.key.keysym.sym == SDLK_SPACE){
+            flap_bird(data);
+        }
     }
 }
 
 
-void control_menu(GameData* data,ControllerState* controller, SDL_Event event){
+void control_menu(GameData* data,ControllerState* controller){
     /*
      * Obtain current SDL ticks 
      */
@@ -86,14 +89,17 @@ void control_menu(GameData* data,ControllerState* controller, SDL_Event event){
      * Modify menue state based on user input if enough time has passed
      */
     if(SDL_TICKS_PASSED(currentTime,controller->last_user_input + controller->poll_interval)){ 
-        proccese_menu_event(data,controller,event);
+        proccese_menu_event(data,controller);
         controller->last_user_input = currentTime;
     }
 
 }
 
-void proccese_menu_event(GameData* data,ControllerState* controller, SDL_Event event){
-    if(event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_SPACE){
-        reset_state(data);
+void proccese_menu_event(GameData* data,ControllerState* controller){
+    SDL_Event event;
+    while(SDL_PeepEvents(&event,1,SDL_GETEVENT,SDL_KEYDOWN,SDL_KEYDOWN)){
+        if(event.key.keysym.sym == SDLK_SPACE){
+            reset_state(data);
+        }
     }
 }

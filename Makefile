@@ -1,4 +1,4 @@
-GCC_OPTIONS=-Wpedantic -O
+GCC_OPTIONS=-Wall -O
 OBJECT_FILES=main.o gamelogic.o drawlogic.o controllerlogic.o
 LINKS= -lSDL2_image-2.0 -lSDL2 -lSDL2_ttf
 EXECUTABLE=FlappyBird

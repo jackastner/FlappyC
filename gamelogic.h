@@ -24,7 +24,7 @@ void destroy_GameData(GameData* data);
  */
 
 void reset_state(GameData* data);
-int flap_bird(GameData* data);
+void flap_bird(GameData* data);
 void update_state(GameData* data);
 
 /*

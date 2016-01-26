@@ -120,7 +120,7 @@ void update_state(GameData* data){
     }
 }
 
-int flap_bird(GameData* data){
+void flap_bird(GameData* data){
     data->bird_v = -5;
 }
 

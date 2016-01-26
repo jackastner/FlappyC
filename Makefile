@@ -3,6 +3,10 @@ OBJECT_FILES=main.o gamelogic.o drawlogic.o controllerlogic.o
 LINKS= -lSDL2_image-2.0 -lSDL2 -lSDL2_ttf
 EXECUTABLE=FlappyBird
 
+HS_BUILD_FILES=gamelogic.hi
+
+C2HS_BUILD_FILES=gamelogic.chi gamelogic.chs.h gamelogic.hs
+
 all: $(EXECUTABLE)
 
 $(EXECUTABLE): $(OBJECT_FILES)
@@ -11,14 +15,17 @@ $(EXECUTABLE): $(OBJECT_FILES)
 main.o: main.c
 	gcc -c $(GCC_OPTIONS) -o main.o main.c
 
-gamelogic.o: gamelogic.c gamelogic.h
-	gcc -c $(GCC_OPTIONS) -o gamelogic.o gamelogic.c
-
 drawlogic.o: drawlogic.c drawlogic.h
 	gcc -c $(GCC_OPTIONS) -o drawlogic.o drawlogic.c
 
 controllerlogic.o: controllerlogic.c controllerlogic.h
 	gcc -c $(GCC_OPTIONS) -o controllerlogic.o controllerlogic.c
 
+gamelogic.o: gamelogic.hs
+	ghc -c $(GCC_OPTIONS) gamelogic.hs
+
+gamelogic.hs: gamelogic.chs
+	c2hs gamelogic.chs
+
 clean:
-	rm $(OBJECT_FILES) $(EXECUTABLE)
+	rm $(OBJECT_FILES) $(C2HS_BUILD_FILES) $(HS_BUILD_FILES)  $(EXECUTABLE)

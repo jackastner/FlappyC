@@ -3,7 +3,7 @@ OBJECT_FILES=main.o gamelogic.o drawlogic.o controllerlogic.o
 LINKS= -lSDL2_image-2.0 -lSDL2 -lSDL2_ttf
 EXECUTABLE=FlappyBird
 
-HS_BUILD_FILES=gamelogic.hi
+HS_BUILD_FILES=gamelogic.hi gamelogic_stub.h
 
 C2HS_BUILD_FILES=gamelogic.chi gamelogic.chs.h gamelogic.hs
 
@@ -24,7 +24,7 @@ controllerlogic.o: controllerlogic.c controllerlogic.h
 gamelogic.o: gamelogic.hs
 	ghc -c $(GCC_OPTIONS) gamelogic.hs
 
-gamelogic.hs: gamelogic.chs
+gamelogic.hs: gamelogic.chs gamestructs.h
 	c2hs gamelogic.chs
 
 clean:

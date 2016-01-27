@@ -6,6 +6,7 @@ import Foreign.Ptr
 import Foreign.Storable
 import Control.Applicative
 import Foreign.Marshal.Array
+import System.Random
 #include "gamestructs.h"
 
 #c
@@ -111,3 +112,43 @@ getNumPipes :: Integral a => a -> a -> a -> a
 getNumPipes sw pw pInt = (sw + 2*pw)`div`pInt
 
 foreign export ccall get_num_pipes :: GameDataPtr -> IO C2HSImp.CInt
+
+update_state :: GameDataPtr -> IO ()
+update_state p = do
+    numPipes <- fromIntegral <$> get_num_pipes p
+    pipes <- {#get GameData->pipe_array#} p >>= peekArray numPipes 
+    birdX <- fromIntegral <$> {#get GameData->bird_x#} p
+    pipeV <- fromIntegral <$> {#get GameData->pipe_v#} p
+    score <- fromIntegral <$> {#get GameData->score#} p
+    let newScore = updateScore pipes birdX pipeV score
+    {#set GameData->score#} p $ fromIntegral newScore
+
+    birdY <- fromIntegral <$> {#get GameData->bird_y#} p
+    birdV <- fromIntegral <$> {#get GameData->bird_v#} p
+    mapM_ print [birdY,birdV] 
+    let (newBirdY,newBirdV) = updateBird birdY birdV
+    {#set GameData->bird_y#} p $ fromIntegral newBirdY
+    {#set GameData->bird_v#} p $ fromIntegral newBirdV
+
+updateScore :: [Pipe] -> Int -> Int -> Int -> Int
+updateScore pipes birdX pipeV score =score +  (sum . map (fromEnum . birdInRange) $ pipes)
+    where birdInRange (Pipe x _ _) = birdX > (x - pipeV) && birdX <= x
+
+updateBird :: Int -> Int -> (Int,Int)
+updateBird y v = (y+v,v-1)
+
+updatePipes :: [Pipe] -> Int -> Int -> Int -> Int -> IO [Pipe]
+updatePipes pipes pipeV pipeW stageW stageH = mapM (\p -> movePipe p pipeV pipeW stageW stageH) pipes
+
+movePipe :: Pipe -> Int -> Int -> Int -> Int -> IO Pipe 
+movePipe (Pipe x t b) pipeV pipeW stageW stageH
+    | x + pipeV < -pipeW  = do 
+        top <- randomRIO (0,stageH - 30)
+        let bottom = top + 30
+        let newX   = stageW + pipeW
+        return $ Pipe newX top bottom
+    | otherwise = return $ Pipe (x + pipeV) t b  
+
+foreign export ccall update_state :: GameDataPtr -> IO ()
+
+

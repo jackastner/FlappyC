@@ -8,6 +8,21 @@ import Control.Applicative
 import Foreign.Marshal.Array
 #include "gamestructs.h"
 
+data Pipe = Pipe { xPos :: Int, topEnd :: Int, bottomStart :: Int}
+{#pointer *Pipe as PipePtr -> Pipe#}
+
+instance Storable Pipe where
+    sizeOf _ = {#sizeof Pipe#}
+    alignment _ = {#alignof Pipe#}
+    peek p = do
+        x <- fromIntegral <$> {#get Pipe->x#} p
+        t <-  fromIntegral <$> {#get Pipe->top_end#} p
+        b <- fromIntegral <$> {#get Pipe->bottom_start#} p
+        return $ Pipe x t b 
+    poke p pipe = do
+        {#set Pipe->x#} p $ (fromIntegral $ xPos pipe)
+        {#set Pipe->top_end#} p $ (fromIntegral $ topEnd pipe) 
+        {#set Pipe->bottom_start#} p $ (fromIntegral $ bottomStart pipe)
 #c
 struct GameData {
     int stage_width;
@@ -30,24 +45,66 @@ struct GameData {
     Pipe *pipe_array;
 };
 #endc
-data GameData
+data GameData = GameData {
+    stageWidth :: Int,
+    stageHeight :: Int,
+    
+    birdWidth :: Int,
+    birdHeight :: Int,
+
+    pipeWidth :: Int,
+    pipeGapHeight :: Int,
+    pipeInterval :: Int,
+    pipeV :: Int,
+
+    score :: Int,
+
+    birdV :: Int,
+    birdX :: Int,
+    birdY :: Int,
+
+    pipeArray :: [Pipe]}
 {#pointer *GameData as GameDataPtr -> GameData#}
-
-data Pipe = Pipe { xPos :: Int, topEnd :: Int, bottomStart :: Int}
-{#pointer *Pipe as PipePtr -> Pipe#}
-
-instance Storable Pipe where
-    sizeOf _ = {#sizeof Pipe#}
-    alignment _ = {#alignof Pipe#}
+instance Storable GameData where
+    sizeOf _ = {#sizeof GameData#}
+    alignment _ = {#alignof GameData#}
     peek p = do
-        x <- fromIntegral <$> {#get Pipe->x#} p
-        t <-  fromIntegral <$> {#get Pipe->top_end#} p
-        b <- fromIntegral <$> {#get Pipe->bottom_start#} p
-        return $ Pipe x t b 
-    poke p pipe = do
-        {#set Pipe->x#} p $ (fromIntegral $ xPos pipe)
-        {#set Pipe->top_end#} p $ (fromIntegral $ topEnd pipe) 
-        {#set Pipe->bottom_start#} p $ (fromIntegral $ bottomStart pipe)
+        sw <- fromIntegral <$> {#get GameData->stage_width#} p
+        sh <- fromIntegral <$> {#get GameData->stage_height#} p
+
+        bw <- fromIntegral <$> {#get GameData->bird_width#} p
+        bh <- fromIntegral <$> {#get GameData->bird_height#} p
+
+        pw <- fromIntegral <$> {#get GameData->pipe_width#} p
+        pg <- fromIntegral <$> {#get GameData->pipe_gap_height#} p
+        pi <- fromIntegral <$> {#get GameData->pipe_interval#} p
+        pv <- fromIntegral <$> {#get GameData->pipe_v#} p
+
+        s  <- fromIntegral <$> {#get GameData->score#} p
+
+        bv <- fromIntegral <$> {#get GameData->bird_v#} p
+        bx <- fromIntegral <$> {#get GameData->bird_x#} p
+        by <- fromIntegral <$> {#get GameData->bird_y#} p
+        
+        numPipes <- fromIntegral <$> get_num_pipes p
+        pipes <- {#get GameData->pipe_array#} p >>= peekArray numPipes
+        return $ GameData sw sh bw bh pw pg pi pv s bv bx by pipes
+    poke p (GameData sw sh bw bh pw pg pi pv s bv bx by pipes) = do
+        {#set GameData->stage_width#} p $ fromIntegral sw     
+        {#set GameData->stage_height#} p $ fromIntegral sh 
+        {#set GameData->bird_width#} p $ fromIntegral bw
+        {#set GameData->bird_height#} p $ fromIntegral bh
+        {#set GameData->pipe_width#} p $ fromIntegral pw
+        {#set GameData->pipe_gap_height#} p $ fromIntegral pg
+        {#set GameData->pipe_interval#} p $ fromIntegral pi
+        {#set GameData->pipe_v#} p $ fromIntegral pv
+        {#set GameData->score#} p $ fromIntegral s
+        {#set GameData->bird_v#} p $ fromIntegral bv
+        {#set GameData->bird_x#} p $ fromIntegral bx
+        {#set GameData->bird_y#} p $ fromIntegral by
+        pipePtr <- {#get GameData->pipe_array#} p
+        pokeArray pipePtr pipes 
+
 
 
 create_GameData :: IO GameDataPtr 
@@ -189,10 +246,7 @@ is_gameover :: GameDataPtr -> IO Bool
 is_gameover p  = do
     y <- {#get GameData->bird_y#} p
     h <- {#get GameData->stage_height#} p
-    if y < 0 || y >= h then
-        return True
-    else
-        return False
+    return $ y < 0 || y >= h
 
 foreign export ccall is_gameover :: GameDataPtr -> IO Bool
 

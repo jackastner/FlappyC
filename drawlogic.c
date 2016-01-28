@@ -125,8 +125,8 @@ void render_background(GameData* data, DrawConfig* config){
 
 void render_all_pipes(GameData* data, DrawConfig* config){
     for(int i=0; i < get_num_pipes(data); i++){
-        Pipe pipe = get_pipe(data,i);
-        render_pipe(data,config,&pipe);
+        Pipe *pipe = get_pipe(data,i);
+        render_pipe(data,config,pipe);
     }
 }
 

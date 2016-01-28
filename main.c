@@ -1,10 +1,12 @@
-#include <string.h>
-#include <time.h>
-#include "gamelogic.h"
 #include "drawlogic.h"
 #include "controllerlogic.h"
+#include "gamelogic.h"
+#include <stdio.h>
+#include <HsFFI.h>
 
 int main(int argc, char** argv){
+    hs_init(&argc,&argv);
+
     DrawConfig* config = create_DrawConfig();
     GameData* data = create_GameData();
     ControllerState* controller = create_ControllerState();
@@ -17,4 +19,5 @@ int main(int argc, char** argv){
     destroy_GameData(data);
     destroy_ControllerState(controller);
 
+    hs_exit();
 }

@@ -1,5 +1,6 @@
 #ifndef GAME_STRUCTS
 #define GAME_STRUCTS
+
 typedef struct GameData GameData;
 
 typedef struct Pipe Pipe;

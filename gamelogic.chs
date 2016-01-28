@@ -6,7 +6,6 @@ import Foreign.Ptr
 import Foreign.Storable
 import Control.Applicative
 import Foreign.Marshal.Array
-import System.Random
 #include "gamestructs.h"
 
 #c
@@ -125,7 +124,6 @@ update_state p = do
 
     birdY <- fromIntegral <$> {#get GameData->bird_y#} p
     birdV <- fromIntegral <$> {#get GameData->bird_v#} p
-    mapM_ print [birdY,birdV] 
     let (newBirdY,newBirdV) = updateBird birdY birdV
     {#set GameData->bird_y#} p $ fromIntegral newBirdY
     {#set GameData->bird_v#} p $ fromIntegral newBirdV
@@ -135,7 +133,7 @@ updateScore pipes birdX pipeV score =score +  (sum . map (fromEnum . birdInRange
     where birdInRange (Pipe x _ _) = birdX > (x - pipeV) && birdX <= x
 
 updateBird :: Int -> Int -> (Int,Int)
-updateBird y v = (y+v,v-1)
+updateBird y v = (y+v,v+1)
 
 updatePipes :: [Pipe] -> Int -> Int -> Int -> Int -> IO [Pipe]
 updatePipes pipes pipeV pipeW stageW stageH = mapM (\p -> movePipe p pipeV pipeW stageW stageH) pipes
@@ -143,7 +141,7 @@ updatePipes pipes pipeV pipeW stageW stageH = mapM (\p -> movePipe p pipeV pipeW
 movePipe :: Pipe -> Int -> Int -> Int -> Int -> IO Pipe 
 movePipe (Pipe x t b) pipeV pipeW stageW stageH
     | x + pipeV < -pipeW  = do 
-        top <- randomRIO (0,stageH - 30)
+        top <- return 10 --randomRIO (0,stageH - 30)
         let bottom = top + 30
         let newX   = stageW + pipeW
         return $ Pipe newX top bottom
@@ -151,4 +149,48 @@ movePipe (Pipe x t b) pipeV pipeW stageW stageH
 
 foreign export ccall update_state :: GameDataPtr -> IO ()
 
+get_pipe :: GameDataPtr -> C2HSImp.CInt -> IO PipePtr
+get_pipe p n = flip advancePtr (fromIntegral n) <$> {#get GameData->pipe_array#} p
 
+foreign export ccall get_pipe :: GameDataPtr -> C2HSImp.CInt  -> IO PipePtr
+
+get_score :: GameDataPtr -> IO C2HSImp.CInt
+get_score = {#get GameData->score#}
+
+foreign export ccall get_score ::GameDataPtr -> IO C2HSImp.CInt
+
+get_stage_height :: GameDataPtr -> IO C2HSImp.CInt
+get_stage_height = {#get GameData->stage_height#}
+
+foreign export ccall get_stage_height :: GameDataPtr -> IO C2HSImp.CInt
+
+get_stage_width :: GameDataPtr -> IO C2HSImp.CInt
+get_stage_width = {#get GameData->stage_width#}
+
+foreign export ccall get_stage_width :: GameDataPtr -> IO C2HSImp.CInt
+
+get_bird_y :: GameDataPtr -> IO C2HSImp.CInt
+get_bird_y = {#get GameData->bird_y#}
+
+foreign export ccall get_bird_y :: GameDataPtr -> IO C2HSImp.CInt
+
+get_bird_x :: GameDataPtr -> IO C2HSImp.CInt
+get_bird_x = {#get GameData->bird_x#}
+
+foreign export ccall get_bird_x :: GameDataPtr -> IO C2HSImp.CInt
+
+is_gameover :: GameDataPtr -> IO Bool
+is_gameover p  = do
+    y <- {#get GameData->bird_y#} p
+    h <- {#get GameData->stage_height#} p
+    if y < 0 || y >= h then
+        return True
+    else
+        return False
+
+foreign export ccall is_gameover :: GameDataPtr -> IO Bool
+
+flap_bird :: GameDataPtr -> IO ()
+flap_bird  p = {#set GameData->bird_v#} p (-5)
+
+foreign export ccall flap_bird :: GameDataPtr -> IO ()

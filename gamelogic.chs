@@ -128,6 +128,12 @@ update_state p = do
     {#set GameData->bird_y#} p $ fromIntegral newBirdY
     {#set GameData->bird_v#} p $ fromIntegral newBirdV
 
+    pipeW <- fromIntegral <$> {#get GameData->pipe_width#} p
+    stageW <- fromIntegral <$> {#get GameData->stage_width#} p
+    stageH <- fromIntegral <$> {#get GameData->stage_height#} p
+    pipePtr <- {#get GameData->pipe_array#} p 
+    updatePipes pipes pipeV pipeW stageW stageH >>= pokeArray pipePtr
+
 updateScore :: [Pipe] -> Int -> Int -> Int -> Int
 updateScore pipes birdX pipeV score =score +  (sum . map (fromEnum . birdInRange) $ pipes)
     where birdInRange (Pipe x _ _) = birdX > (x - pipeV) && birdX <= x
@@ -145,7 +151,7 @@ movePipe (Pipe x t b) pipeV pipeW stageW stageH
         let bottom = top + 30
         let newX   = stageW + pipeW
         return $ Pipe newX top bottom
-    | otherwise = return $ Pipe (x + pipeV) t b  
+    | otherwise = return $ Pipe (x - pipeV) t b  
 
 foreign export ccall update_state :: GameDataPtr -> IO ()
 

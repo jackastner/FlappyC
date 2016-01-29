@@ -12,7 +12,6 @@ struct GameData {
     int bird_height;
 
     int pipe_width;
-    int pipe_gap_height;
     int pipe_interval;
     int pipe_v;
 

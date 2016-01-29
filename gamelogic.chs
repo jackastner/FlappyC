@@ -213,11 +213,17 @@ is_gameover :: GameDataPtr -> IO Bool
 is_gameover p  = isGameOver <$> peek p
 
 isGameOver :: GameData -> Bool
-isGameOver GameData{birdY=y,stageHeight=h} = y < 0 || y >=  h
+isGameOver game@GameData{birdY=y,stageHeight=h,pipeArray=pipes} = y < 0 || y >=  h || any (pipeCollision game) pipes 
+
+pipeCollision :: GameData -> Pipe -> Bool
+pipeCollision game pipe = xHit && yHit
+    where xHit = (birdX game) > (xPos pipe) - (pipeWidth game - birdWidth game)`div`2 &&
+                 (birdX game) < (xPos pipe) + (pipeWidth game + birdWidth game)`div`2
+          yHit = (birdY game) > bottomStart pipe - (birdHeight game)`div`2 ||
+                 (birdY game) < topEnd pipe + (birdHeight game)`div`2
 
 foreign export ccall is_gameover :: GameDataPtr -> IO Bool
 
 flap_bird :: GameDataPtr -> IO ()
 flap_bird  p = {#set GameData->bird_v#} p (-5)
-
 foreign export ccall flap_bird :: GameDataPtr -> IO ()

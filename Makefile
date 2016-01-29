@@ -23,12 +23,13 @@ controllerlogic.o: controllerlogic.c controllerlogic.h gamelogic.h
 
 gamelogic.h:gamestructs.h gamelogic_stub.h
 
-gamelogic_stub.h: gamelogic.o
-gamelogic.o: gamelogic.hs
+gamelogic.o gamelogic_stub.h: gamelogic.hs
 	ghc -c --make gamelogic.hs
 
 gamelogic.hs: gamelogic.chs gamestructs.h
 	c2hs gamelogic.chs
 
+test-haskell: gamelogic.hs
+	ghci -fobject-code gamelogic.hs
 clean:
 	rm $(OBJECT_FILES) $(C2HS_BUILD_FILES) $(HS_BUILD_FILES)  $(EXECUTABLE)

@@ -32,7 +32,6 @@ struct GameData {
     int bird_height;
 
     int pipe_width;
-    int pipe_gap_height;
     int pipe_interval;
     int pipe_v;
 
@@ -53,7 +52,6 @@ data GameData = GameData {
     birdHeight :: Int,
 
     pipeWidth :: Int,
-    pipeGapHeight :: Int,
     pipeInterval :: Int,
     pipeV :: Int,
 
@@ -74,24 +72,22 @@ instance Storable GameData where
         bw <- fromIntegral <$> {#get GameData->bird_width#} p
         bh <- fromIntegral <$> {#get GameData->bird_height#} p
         pw <- fromIntegral <$> {#get GameData->pipe_width#} p
-        pg <- fromIntegral <$> {#get GameData->pipe_gap_height#} p
         pi <- fromIntegral <$> {#get GameData->pipe_interval#} p
         pv <- fromIntegral <$> {#get GameData->pipe_v#} p
         s  <- fromIntegral <$> {#get GameData->score#} p
         bv <- fromIntegral <$> {#get GameData->bird_v#} p
         bx <- fromIntegral <$> {#get GameData->bird_x#} p
         by <- fromIntegral <$> {#get GameData->bird_y#} p
-        let game = GameData sw sh bw bh pw pg pi pv s bv bx by [] 
+        let game = GameData sw sh bw bh pw pi pv s bv bx by [] 
         pipes <- {#get GameData->pipe_array#} p >>= (peekArray $ numPipes game)
         return $ game {pipeArray = pipes}
 
-    poke p (GameData sw sh bw bh pw pg pi pv s bv bx by pipes) = do
+    poke p (GameData sw sh bw bh pw pi pv s bv bx by pipes) = do
         {#set GameData->stage_width#} p $ fromIntegral sw     
         {#set GameData->stage_height#} p $ fromIntegral sh 
         {#set GameData->bird_width#} p $ fromIntegral bw
         {#set GameData->bird_height#} p $ fromIntegral bh
         {#set GameData->pipe_width#} p $ fromIntegral pw
-        {#set GameData->pipe_gap_height#} p $ fromIntegral pg
         {#set GameData->pipe_interval#} p $ fromIntegral pi
         {#set GameData->pipe_v#} p $ fromIntegral pv
         {#set GameData->score#} p $ fromIntegral s
@@ -118,7 +114,6 @@ initialGameState = resetState $  GameData {
         birdWidth = 5,
         
         pipeWidth = 5,
-        pipeGapHeight = 30,
         pipeInterval = 58,
         pipeV = 2}
 

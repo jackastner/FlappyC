@@ -23,5 +23,8 @@ gamelogic.h: gamestructs.h gamelogic_stub.h
 gamelogic.hs: gamelogic.chs gamestructs.h
 	c2hs gamelogic.chs
 	
+test-haskell: gamelogic.hs
+	ghci -fobject-code gamelogic.hs
+
 clean:
 	rm Flappy gamelogic.chi gamelogic.chs.h gamelogic.hi gamelogic.o gamelogic_stub.h gamelogic.hs main.o controllerlogic.o drawlogic.o

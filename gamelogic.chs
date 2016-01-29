@@ -113,8 +113,8 @@ initialGameState = resetState $  GameData {
         birdHeight = 5,
         birdWidth = 5,
         
-        pipeWidth = 5,
-        pipeInterval = 58,
+        pipeWidth = 8,
+        pipeInterval = (100+2*8)`div`2,
         pipeV = 2}
 
 foreign export ccall create_GameData :: IO GameDataPtr 

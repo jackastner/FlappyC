@@ -1,17 +1,22 @@
-Flappy: main.o drawlogic.o controllerlogic.o 
-	ghc --make -no-hs-main main.o drawlogic.o controllerlogic.o gamelogic -o  Flappy -lSDL2_image-2.0 -lSDL2 -lSDL2_ttf
+LINKS=-lSDL2_image-2.0 -lSDL2 -lSDL2_ttf
+EXECUTABLE=Flappy
+HSC=ghc
+HSC_OPTIONS=--make -O
+
+$(EXECUTABLE): main.o drawlogic.o controllerlogic.o gamelogic.o
+	$(HSC) $(HSC_OPTIONS) -no-hs-main main.o drawlogic.o controllerlogic.o gamelogic -o $(EXECUTABLE) $(LINKS)
 
 main.o: main.c  gamelogic.h drawlogic.h controllerlogic.h
-	ghc -c --make main.c
+	$(HSC) -c $(HSC_OPTIONS) main.c
 
 drawlogic.o: drawlogic.c drawlogic.h gamelogic.h
-	ghc -c --make drawlogic.c
+	$(HSC) -c $(HSC_OPTIONS) drawlogic.c
 
 controllerlogic.o: controllerlogic.c controllerlogic.h gamelogic.h
-	ghc -c --make controllerlogic.c
+	$(HSC) -c $(HSC_OPTIONS) controllerlogic.c
 
 gamelogic.o gamelogic_stub.h: gamelogic.hs
-	ghc -c gamelogic.hs
+	$(HSC) -c $(HSC_OPTIONS) gamelogic.hs
 
 gamelogic.h: gamestructs.h gamelogic_stub.h
 

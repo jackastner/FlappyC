@@ -7,6 +7,8 @@ import Foreign.Ptr
 import Foreign.Storable
 import Control.Applicative
 import Foreign.Marshal.Array
+import System.Random
+import Control.Monad.Trans.State
 #include "gamestructs.h"
 
 data Pipe = Pipe { xPos :: Int, topEnd :: Int, bottomStart :: Int} deriving (Show)
@@ -153,10 +155,14 @@ numPipes game = ((stageWidth game) + 2*(pipeWidth game))`div`(pipeInterval game)
 foreign export ccall get_num_pipes :: GameDataPtr -> IO CInt
 
 update_state :: GameDataPtr -> IO ()
-update_state p = updateState <$> peek p >>= poke p
+update_state p = do 
+    gen <- getStdGen
+    game <- peek p
+    let newGame = evalState (updateState game) gen
+    poke p newGame
 
-updateState :: GameData -> GameData
-updateState = updatePipes . updateBird . updateScore 
+updateState ::GameData -> State StdGen GameData
+updateState g = updatePipes . updateBird . updateScore $ g
 
 updateScore :: GameData -> GameData
 updateScore game = game {score = (score game) + (fromEnum . any birdInRange . pipeArray $ game)}
@@ -165,13 +171,19 @@ updateScore game = game {score = (score game) + (fromEnum . any birdInRange . pi
 updateBird :: GameData -> GameData
 updateBird game = game {birdY = birdY game + birdV game, birdV = birdV game + 1}
 
-updatePipes :: GameData -> GameData
-updatePipes game = game {pipeArray = map (movePipe game) (pipeArray game)}
+updatePipes :: GameData -> State StdGen GameData
+updatePipes game = do
+    pipes <- mapM (movePipe game) (pipeArray game)
+    return $ game {pipeArray = pipes}
 
-movePipe :: GameData -> Pipe -> Pipe
+movePipe :: GameData -> Pipe -> State StdGen Pipe
 movePipe game (Pipe x t b)  
-    | x + (pipeV game) < -(pipeWidth game) = Pipe (pipeWidth game + stageWidth game) 10 40 
-    | otherwise = Pipe (x - pipeV game) t b
+    | x + (pipeV game) < -(pipeWidth game) = do
+        gen <- get
+        let (top,newGen) = randomR (0,stageHeight game - 30) gen
+        put newGen
+        return $ Pipe (pipeWidth game + stageWidth game) top (top + 30)
+    | otherwise = return $ Pipe (x - pipeV game) t b
 
 foreign export ccall update_state :: GameDataPtr -> IO ()
 

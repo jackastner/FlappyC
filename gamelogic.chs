@@ -1,6 +1,7 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
 module GameLogic where
 
+import Foreign.C.Types
 import Foreign.Marshal.Alloc
 import Foreign.Ptr 
 import Foreign.Storable
@@ -143,13 +144,13 @@ destroy_GameData p = (free <$> {#get GameData->pipe_array#} p) >> (free p)
 
 foreign export ccall destroy_GameData :: GameDataPtr -> IO ()
  
-get_num_pipes :: GameDataPtr  -> IO C2HSImp.CInt
+get_num_pipes :: GameDataPtr  -> IO CInt
 get_num_pipes p = fromIntegral . numPipes <$> peek p  
 
 numPipes :: GameData -> Int
 numPipes game = ((stageWidth game) + 2*(pipeWidth game))`div`(pipeInterval game)  
     
-foreign export ccall get_num_pipes :: GameDataPtr -> IO C2HSImp.CInt
+foreign export ccall get_num_pipes :: GameDataPtr -> IO CInt
 
 update_state :: GameDataPtr -> IO ()
 update_state p = updateState <$> peek p >>= poke p
@@ -174,35 +175,35 @@ movePipe game (Pipe x t b)
 
 foreign export ccall update_state :: GameDataPtr -> IO ()
 
-get_pipe :: GameDataPtr -> C2HSImp.CInt -> IO PipePtr
+get_pipe :: GameDataPtr -> CInt -> IO PipePtr
 get_pipe p n = flip advancePtr (fromIntegral n) <$> {#get GameData->pipe_array#} p
 
-foreign export ccall get_pipe :: GameDataPtr -> C2HSImp.CInt  -> IO PipePtr
+foreign export ccall get_pipe :: GameDataPtr -> CInt  -> IO PipePtr
 
-get_score :: GameDataPtr -> IO C2HSImp.CInt
+get_score :: GameDataPtr -> IO CInt
 get_score = {#get GameData->score#}
 
-foreign export ccall get_score ::GameDataPtr -> IO C2HSImp.CInt
+foreign export ccall get_score ::GameDataPtr -> IO CInt
 
-get_stage_height :: GameDataPtr -> IO C2HSImp.CInt
+get_stage_height :: GameDataPtr -> IO CInt
 get_stage_height = {#get GameData->stage_height#}
 
-foreign export ccall get_stage_height :: GameDataPtr -> IO C2HSImp.CInt
+foreign export ccall get_stage_height :: GameDataPtr -> IO CInt
 
-get_stage_width :: GameDataPtr -> IO C2HSImp.CInt
+get_stage_width :: GameDataPtr -> IO CInt
 get_stage_width = {#get GameData->stage_width#}
 
-foreign export ccall get_stage_width :: GameDataPtr -> IO C2HSImp.CInt
+foreign export ccall get_stage_width :: GameDataPtr -> IO CInt
 
-get_bird_y :: GameDataPtr -> IO C2HSImp.CInt
+get_bird_y :: GameDataPtr -> IO CInt
 get_bird_y = {#get GameData->bird_y#}
 
-foreign export ccall get_bird_y :: GameDataPtr -> IO C2HSImp.CInt
+foreign export ccall get_bird_y :: GameDataPtr -> IO CInt
 
-get_bird_x :: GameDataPtr -> IO C2HSImp.CInt
+get_bird_x :: GameDataPtr -> IO CInt
 get_bird_x = {#get GameData->bird_x#}
 
-foreign export ccall get_bird_x :: GameDataPtr -> IO C2HSImp.CInt
+foreign export ccall get_bird_x :: GameDataPtr -> IO CInt
 
 is_gameover :: GameDataPtr -> IO Bool
 is_gameover p  = isGameOver <$> peek p

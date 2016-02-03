@@ -334,6 +334,15 @@ void render_gameover_message(GameData* data, DrawConfig* config){
     SDL_FreeSurface(again_surface);
 }
 
+void render_clear(DrawConfig* config){
+    if(SDL_SetRenderDrawColor(config->renderer, 0xFF, 0xFF, 0xFF, 0xFF) != 0){
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"Error setting render color to white (FF,FF,FF,FF): %s\n",SDL_GetError());
+    }
+    if(SDL_RenderClear(config->renderer) != 0){
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"Error clearing renderer: %s\n",SDL_GetError());
+    }
+}
+
 int scale_x_to_userspace(GameData* data, DrawConfig* config, int x){
     double x_scale_factor = config->window_width / get_stage_width(data);
     return (x * x_scale_factor);
@@ -346,16 +355,10 @@ int scale_y_to_userspace(GameData* data, DrawConfig* config, int y){
 
 
 void render_game(GameData* data, DrawConfig* config){
-
     /*
      * Clear the window prior to any rendering
      */
-    if(SDL_SetRenderDrawColor(config->renderer, 0xFF, 0xFF, 0xFF, 0xFF) != 0){
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"Error setting render color to white (FF,FF,FF,FF): %s\n",SDL_GetError());
-    }
-    if(SDL_RenderClear(config->renderer) != 0){
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"Error clearing renderer: %s\n",SDL_GetError());
-    }
+    render_clear(config); 
 
     /*
      * Draw all componenets of the came

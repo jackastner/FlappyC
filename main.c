@@ -1,4 +1,5 @@
 #include <string.h>
+#include <time.h>
 #include "gamelogic.h"
 #include "drawlogic.h"
 #include "controllerlogic.h"

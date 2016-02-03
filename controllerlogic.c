@@ -2,7 +2,7 @@
 #include "gamelogic.h"
 #include <SDL2/SDL.h>
 #include <time.h>
-
+#include <stdlib.h>
 
 struct ControllerState {
     Uint32 tick_length;

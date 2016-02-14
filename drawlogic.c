@@ -228,6 +228,15 @@ void render_score(GameData* data, DrawConfig* config){
 
 
 void render_bird(GameData* data, DrawConfig* config){
+    /*Stand in image for bird*/
+    SDL_Rect test = {
+        scale_x_to_userspace(data,config,get_bird_x(data)),
+        scale_y_to_userspace(data,config,get_bird_y(data)),
+        32,
+        32
+    };
+    SDL_SetRenderDrawColor(config->renderer,0xFF,0xFF,0xFF,0x00);
+    SDL_RenderFillRect(config->renderer,&test);
 }
 
 void render_gameover_message(GameData* data, DrawConfig* config){

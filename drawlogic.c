@@ -10,7 +10,6 @@ struct DrawConfig {
     SDL_Renderer* renderer;
     SDL_Window* window;
 
-    SDL_Texture* bird_texture;
     SDL_Texture* background_texture;
     SDL_Texture* pipe_texture;
     SDL_Texture* pipe_top_texture;
@@ -57,11 +56,6 @@ DrawConfig *create_DrawConfig(){
     /*
      * Load image files using SDL_image.
      */
-    char* bird_path =  "resources/images/bird.png";
-    config->bird_texture = IMG_LoadTexture(config->renderer,bird_path);
-    if(config->bird_texture == NULL){
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"Image at \"%s\" failed to load: %s\n",bird_path,IMG_GetError());
-    } 
 
     char* background_path = "resources/images/background.png";
     config->background_texture = IMG_LoadTexture(config->renderer,background_path);
@@ -98,7 +92,6 @@ void destroy_DrawConfig(DrawConfig* config){
      */
     SDL_DestroyWindow(config->window);
     SDL_DestroyRenderer(config->renderer);
-    SDL_DestroyTexture(config->bird_texture);
     SDL_DestroyTexture(config->background_texture);
     SDL_DestroyTexture(config->pipe_texture);
     SDL_DestroyTexture(config->pipe_top_texture);
@@ -235,28 +228,6 @@ void render_score(GameData* data, DrawConfig* config){
 
 
 void render_bird(GameData* data, DrawConfig* config){
-
-    /*
-     * Query Bird image for it's width and heignt
-     */
-    int bird_w,bird_h;
-    if(SDL_QueryTexture(config->bird_texture, NULL, NULL, &bird_w, &bird_h) != 0){
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"Error on query of bird texture: %s\n",SDL_GetError());
-    }
-
-    /*
-     * Specifiy where in the window the bird will be rendered.
-     */
-    SDL_Rect dest_rect = {
-        scale_x_to_userspace(data,config,get_bird_x(data)) - (bird_w / 2),
-        scale_y_to_userspace(data,config,get_bird_y(data)) - (bird_h / 2),
-        bird_w,
-        bird_h
-    };
-
-    if(SDL_RenderCopy(config->renderer,config->bird_texture,NULL,&dest_rect) != 0){
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"Error Rendering bird texture: %s\n",SDL_GetError());
-    }
 }
 
 void render_gameover_message(GameData* data, DrawConfig* config){

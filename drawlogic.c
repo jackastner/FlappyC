@@ -18,6 +18,8 @@ struct DrawConfig {
 
     TTF_Font* game_font;
 
+    int bird_index;
+
     int window_width;
     int window_height;
 };
@@ -26,6 +28,7 @@ DrawConfig *create_DrawConfig(){
     DrawConfig* config = malloc(sizeof(DrawConfig));
 
     config->window_width  = 500;
+    config->bird_index = 0;
     config->window_height = 500;
     
 
@@ -63,6 +66,7 @@ DrawConfig *create_DrawConfig(){
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"Image at \"%s\" failed to load: %s\n",bird_sheet_path,IMG_GetError());
     }
     for(int i = 0; i < 5; i++){
+        /*32 is a magic number. Woops!*/
         config->bird_texture_array[i].x = 32 * i;
         config->bird_texture_array[i].y = 0;
         config->bird_texture_array[i].w = 32;
@@ -241,9 +245,7 @@ void render_score(GameData* data, DrawConfig* config){
 
 
 void render_bird(GameData* data, DrawConfig* config){
-    static int i;
-
-    SDL_Rect source = config->bird_texture_array[i];
+    SDL_Rect source = config->bird_texture_array[config->bird_index];
     SDL_Rect dest = {
         scale_x_to_userspace(data,config,get_bird_x(data)),
         scale_y_to_userspace(data,config,get_bird_y(data)),
@@ -252,10 +254,10 @@ void render_bird(GameData* data, DrawConfig* config){
     };
 
     if(SDL_RenderCopyEx(config->renderer,config->bird_sprite_sheet,&source,&dest,0,NULL,SDL_FLIP_HORIZONTAL) != 0){
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"Error Rendering bird texture %d: %s\n",i, SDL_GetError());
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"Error Rendering bird texture %d: %s\n",config->bird_index, SDL_GetError());
     }
 
-    i = (i+1)%5;
+    config->bird_index = (config->bird_index + 1)%5;
 }
 
 void render_gameover_message(GameData* data, DrawConfig* config){

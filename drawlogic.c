@@ -251,7 +251,7 @@ void render_bird(GameData* data, DrawConfig* config){
         32
     };
 
-    if(SDL_RenderCopy(config->renderer,config->bird_sprite_sheet,&source,&dest) != 0){
+    if(SDL_RenderCopyEx(config->renderer,config->bird_sprite_sheet,&source,&dest,0,NULL,SDL_FLIP_HORIZONTAL) != 0){
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"Error Rendering bird texture %d: %s\n",i, SDL_GetError());
     }
 

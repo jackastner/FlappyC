@@ -18,6 +18,8 @@ struct DrawConfig {
 
     TTF_Font* game_font;
 
+    Uint32 bird_tick_length;
+    Uint32 last_bird_change;
     int bird_index;
 
     int window_width;
@@ -27,8 +29,11 @@ struct DrawConfig {
 DrawConfig *create_DrawConfig(){
     DrawConfig* config = malloc(sizeof(DrawConfig));
 
-    config->window_width  = 500;
+    config->bird_tick_length = 100;
+    config->last_bird_change = 0;
     config->bird_index = 0;
+
+    config->window_width  = 500;
     config->window_height = 500;
     
 
@@ -143,7 +148,7 @@ void render_all_pipes(GameData* data, DrawConfig* config){
 void render_pipe(GameData* data, DrawConfig* config, Pipe* pipe){
 
     /*
-      * Query pipe textures for their height and width;
+     * Query pipe textures for their height and width;
      */
     int pipe_top_texture_h, pipe_top_texture_w;
     if(SDL_QueryTexture(config->pipe_top_texture, NULL, NULL, &pipe_top_texture_w, &pipe_top_texture_h) != 0){
@@ -249,7 +254,7 @@ void render_bird(GameData* data, DrawConfig* config){
     SDL_Rect dest = {
         scale_x_to_userspace(data,config,get_bird_x(data)),
         scale_y_to_userspace(data,config,get_bird_y(data)),
-        32,
+        32, /*Prolly shouldn't hardcode this*/
         32
     };
 
@@ -257,7 +262,12 @@ void render_bird(GameData* data, DrawConfig* config){
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"Error Rendering bird texture %d: %s\n",config->bird_index, SDL_GetError());
     }
 
-    config->bird_index = (config->bird_index + 1)%5;
+
+    Uint32 currentTime = SDL_GetTicks();
+    if(SDL_TICKS_PASSED(currentTime,config->last_bird_change + config->bird_tick_length)){
+        config->last_bird_change = currentTime;
+        config->bird_index = (config->bird_index + 1)%5;
+    }
 }
 
 void render_gameover_message(GameData* data, DrawConfig* config){

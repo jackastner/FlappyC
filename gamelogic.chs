@@ -26,27 +26,7 @@ instance Storable Pipe where
         {#set Pipe->x#} p $ (fromIntegral $ xPos pipe)
         {#set Pipe->top_end#} p $ (fromIntegral $ topEnd pipe) 
         {#set Pipe->bottom_start#} p $ (fromIntegral $ bottomStart pipe)
-#c
-struct GameData {
-    int stage_width;
-    int stage_height;
 
-    int bird_width;
-    int bird_height;
-
-    int pipe_width;
-    int pipe_interval;
-    int pipe_v;
-
-    int score;
-
-    int bird_v;
-    int bird_x;
-    int bird_y;
-
-    Pipe *pipe_array;
-};
-#endc
 data GameData = GameData {
     stageWidth :: Int,
     stageHeight :: Int,
@@ -186,36 +166,6 @@ movePipe game (Pipe x t b)
     | otherwise = return $ Pipe (x - pipeV game) t b
 
 foreign export ccall update_state :: GameDataPtr -> IO ()
-
-get_pipe :: GameDataPtr -> CInt -> IO PipePtr
-get_pipe p n = flip advancePtr (fromIntegral n) <$> {#get GameData->pipe_array#} p
-
-foreign export ccall get_pipe :: GameDataPtr -> CInt  -> IO PipePtr
-
-get_score :: GameDataPtr -> IO CInt
-get_score = {#get GameData->score#}
-
-foreign export ccall get_score ::GameDataPtr -> IO CInt
-
-get_stage_height :: GameDataPtr -> IO CInt
-get_stage_height = {#get GameData->stage_height#}
-
-foreign export ccall get_stage_height :: GameDataPtr -> IO CInt
-
-get_stage_width :: GameDataPtr -> IO CInt
-get_stage_width = {#get GameData->stage_width#}
-
-foreign export ccall get_stage_width :: GameDataPtr -> IO CInt
-
-get_bird_y :: GameDataPtr -> IO CInt
-get_bird_y = {#get GameData->bird_y#}
-
-foreign export ccall get_bird_y :: GameDataPtr -> IO CInt
-
-get_bird_x :: GameDataPtr -> IO CInt
-get_bird_x = {#get GameData->bird_x#}
-
-foreign export ccall get_bird_x :: GameDataPtr -> IO CInt
 
 is_gameover :: GameDataPtr -> IO Bool
 is_gameover p  = isGameOver <$> peek p

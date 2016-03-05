@@ -1,10 +1,10 @@
 LINKS=-lSDL2_image-2.0 -lSDL2 -lSDL2_ttf
 EXECUTABLE=Flappy
 HSC=ghc
-HSC_OPTIONS=--make -O
+HSC_OPTIONS=-O
 
-$(EXECUTABLE): main.o drawlogic.o controllerlogic.o gamelogic.o
-	$(HSC) $(HSC_OPTIONS) -no-hs-main main.o drawlogic.o controllerlogic.o gamelogic -o $(EXECUTABLE) $(LINKS)
+$(EXECUTABLE): main.o drawlogic.o controllerlogic.o gamelogic_c.o
+	$(HSC) $(HSC_OPTIONS) --make -no-hs-main main.o drawlogic.o controllerlogic.o gamelogic_c.o gamelogic -o $(EXECUTABLE) $(LINKS)
 
 main.o: main.c  gamelogic.h drawlogic.h controllerlogic.h
 	$(HSC) -c $(HSC_OPTIONS) main.c
@@ -14,6 +14,9 @@ drawlogic.o: drawlogic.c drawlogic.h gamelogic.h
 
 controllerlogic.o: controllerlogic.c controllerlogic.h gamelogic.h
 	$(HSC) -c $(HSC_OPTIONS) controllerlogic.c
+
+gamelogic_c.o: gamelogic.c gamelogic.h
+	$(HSC) -c $(HSC_OPTIONS) -o gamelogic_c.o gamelogic.c
 
 gamelogic.o gamelogic_stub.h: gamelogic.hs
 	$(HSC) -c $(HSC_OPTIONS) gamelogic.hs
@@ -27,4 +30,4 @@ test-haskell: gamelogic.hs
 	ghci -fobject-code gamelogic.hs
 
 clean:
-	rm Flappy gamelogic.chi gamelogic.chs.h gamelogic.hi gamelogic.o gamelogic_stub.h gamelogic.hs main.o controllerlogic.o drawlogic.o
+	rm Flappy gamelogic.chi gamelogic.chs.h gamelogic.hi gamelogic_stub.h gamelogic.hs main.o controllerlogic.o drawlogic.o gamelogic_c.o gamelogic.o 

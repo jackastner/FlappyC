@@ -90,6 +90,12 @@ create_GameData = do
 
 initialGameState :: GameData
 initialGameState = resetState $  GameData {
+        birdX = 50,
+        birdY = 50,
+        birdV = -5,
+
+        score = 0,
+
         stageWidth  = 100,
         stageHeight = 100,
 
@@ -98,7 +104,8 @@ initialGameState = resetState $  GameData {
         
         pipeWidth = 8,
         pipeInterval = (100+2*8)`div`2,
-        pipeV = 2}
+        pipeV = 2,
+        pipeArray = []}
 
 foreign export ccall create_GameData :: IO GameDataPtr 
 

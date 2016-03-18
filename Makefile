@@ -30,4 +30,4 @@ test-haskell: gamelogic.hs
 	ghci -fobject-code gamelogic.hs
 
 clean:
-	rm Flappy gamelogic.chi gamelogic.chs.h gamelogic.hi gamelogic_stub.h gamelogic.hs main.o controllerlogic.o drawlogic.o gamelogic_c.o gamelogic.o 
+	rm -f Flappy gamelogic.chi gamelogic.chs.h gamelogic.hi gamelogic_stub.h gamelogic.hs main.o controllerlogic.o drawlogic.o gamelogic_c.o gamelogic.o 

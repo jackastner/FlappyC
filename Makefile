@@ -21,4 +21,4 @@ controllerlogic.o: controllerlogic.c controllerlogic.h gamelogic.h
 	gcc -c $(GCC_OPTIONS) -o controllerlogic.o controllerlogic.c
 
 clean:
-	rm $(OBJECT_FILES) $(EXECUTABLE)
+	rm -f $(OBJECT_FILES) $(EXECUTABLE)

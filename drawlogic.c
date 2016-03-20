@@ -11,7 +11,7 @@ struct DrawConfig {
     SDL_Window* window;
 
     SDL_Texture* bird_sprite_sheet;
-    SDL_Rect bird_texture_array[5];
+    SDL_Rect bird_texture_array[BIRD_SPRITE_NUM];
     SDL_Texture* background_texture;
     SDL_Texture* pipe_texture;
     SDL_Texture* pipe_top_texture;
@@ -70,7 +70,7 @@ DrawConfig *create_DrawConfig(){
     if(config->bird_sprite_sheet == NULL){
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"Image at \"%s\" failed to load: %s\n",bird_sheet_path,IMG_GetError());
     }
-    for(int i = 0; i < 5; i++){
+    for(int i = 0; i < BIRD_SPRITE_NUM; i++){
         /*32 is a magic number. Woops!*/
         config->bird_texture_array[i].x = 32 * i;
         config->bird_texture_array[i].y = 0;
@@ -266,7 +266,7 @@ void render_bird(GameData* data, DrawConfig* config){
     Uint32 currentTime = SDL_GetTicks();
     if(SDL_TICKS_PASSED(currentTime,config->last_bird_change + config->bird_tick_length)){
         config->last_bird_change = currentTime;
-        config->bird_index = (config->bird_index + 1)%5;
+        config->bird_index = (config->bird_index + 1)%BIRD_SPRITE_NUM;
     }
 }
 

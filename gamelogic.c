@@ -131,6 +131,14 @@ int get_bird_x(GameData* data){
     return data->bird_x;
 }
 
+int get_bird_height(GameData* data){
+    return data->bird_height;
+}
+
+int get_bird_width(GameData* data){
+    return data->bird_width;
+}
+
 int get_stage_width(GameData* data){
     return data->stage_width;
 }
@@ -169,4 +177,8 @@ Pipe get_pipe(GameData* data, int index){
 
 int get_num_pipes(GameData* data){
     return (data->stage_width + 2*data->pipe_width)/data->pipe_interval;
+}
+
+int get_pipe_width(GameData* data){
+    return data->pipe_width;
 }

@@ -150,13 +150,13 @@ void render_pipe(GameData* data, DrawConfig* config, Pipe* pipe){
     /*
      * Query pipe textures for their height and width;
      */
-    int pipe_top_texture_h, pipe_top_texture_w;
-    if(SDL_QueryTexture(config->pipe_top_texture, NULL, NULL, &pipe_top_texture_w, &pipe_top_texture_h) != 0){
+    int pipe_top_texture_h, pipe_top_texture_w = scale_x_to_userspace(data, config, get_pipe_width(data));
+    if(SDL_QueryTexture(config->pipe_top_texture, NULL, NULL, NULL, &pipe_top_texture_h) != 0){
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"Error on query of pipe top texture: %s\n",SDL_GetError());
     }
 
-    int pipe_texture_h, pipe_texture_w;
-    if(SDL_QueryTexture(config->pipe_texture, NULL, NULL, &pipe_texture_w, &pipe_texture_h) != 0){
+    int pipe_texture_h, pipe_texture_w = pipe_top_texture_w;
+    if(SDL_QueryTexture(config->pipe_texture, NULL, NULL, NULL, &pipe_texture_h) != 0){
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"Error on query of pipe texture: %s\n",SDL_GetError());
     }
 

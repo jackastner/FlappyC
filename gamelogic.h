@@ -32,6 +32,8 @@ void update_state(GameData* data);
  */
 int get_bird_y(GameData* data);
 int get_bird_x(GameData* data);
+int get_bird_height(GameData* data);
+int get_bird_width(GameData* data);
 
 int get_stage_width(GameData* data);
 int get_stage_height(GameData* data);
@@ -43,5 +45,6 @@ int _pipe_collision(GameData* data);
 
 int get_num_pipes(GameData* data);
 Pipe get_pipe(GameData* data, int index);
+int get_pipe_width(GameData* data);
 
 #endif

@@ -30,6 +30,8 @@ struct GameData {
     int bird_x;
     int bird_y;
 
+    int seed;
+
     Pipe *pipe_array;
 };
 

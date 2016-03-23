@@ -44,6 +44,7 @@ data GameData = GameData {
     birdX :: Int,
     birdY :: Int,
 
+    gen ::StdGen,
     pipeArray :: [Pipe]} deriving (Show)
 {#pointer *GameData as GameDataPtr -> GameData#}
 instance Storable GameData where
@@ -61,11 +62,12 @@ instance Storable GameData where
         bv <- fromIntegral <$> {#get GameData->bird_v#} p
         bx <- fromIntegral <$> {#get GameData->bird_x#} p
         by <- fromIntegral <$> {#get GameData->bird_y#} p
-        let game = GameData sw sh bw bh pw pi pv s bv bx by [] 
+        g  <- mkStdGen . fromIntegral <$> {#get GameData->seed#} p
+        let game = GameData sw sh bw bh pw pi pv s bv bx by g []
         pipes <- {#get GameData->pipe_array#} p >>= (peekArray $ numPipes game)
         return $ game {pipeArray = pipes}
 
-    poke p (GameData sw sh bw bh pw pi pv s bv bx by pipes) = do
+    poke p (GameData sw sh bw bh pw pi pv s bv bx by g pipes) = do
         {#set GameData->stage_width#} p $ fromIntegral sw     
         {#set GameData->stage_height#} p $ fromIntegral sh 
         {#set GameData->bird_width#} p $ fromIntegral bw
@@ -77,19 +79,21 @@ instance Storable GameData where
         {#set GameData->bird_v#} p $ fromIntegral bv
         {#set GameData->bird_x#} p $ fromIntegral bx
         {#set GameData->bird_y#} p $ fromIntegral by
+        {#set GameData->seed#} p . fromIntegral . fst . next $ g
         pipePtr <- {#get GameData->pipe_array#} p
         pokeArray pipePtr pipes 
 
 create_GameData :: IO GameDataPtr 
 create_GameData = do
+    game <- initialGameState <$> getStdGen
     gamePtr <- mallocBytes {#sizeof GameData#} :: IO (Ptr GameData)
-    pipePtr <- mallocBytes ({#sizeof Pipe#} * (length . pipeArray $ initialGameState)) 
+    pipePtr <- mallocBytes ({#sizeof Pipe#} * (length . pipeArray $ game)) 
     {#set GameData->pipe_array#} gamePtr pipePtr
-    poke gamePtr initialGameState
+    poke gamePtr game 
     return gamePtr
 
-initialGameState :: GameData
-initialGameState = resetState $  GameData {
+initialGameState :: StdGen -> GameData
+initialGameState g = resetState $  GameData {
         birdX = 50,
         birdY = 50,
         birdV = -5,
@@ -105,6 +109,7 @@ initialGameState = resetState $  GameData {
         pipeWidth = 8,
         pipeInterval = (100+2*8)`div`2,
         pipeV = 2,
+        gen = g,
         pipeArray = []}
 
 foreign export ccall create_GameData :: IO GameDataPtr 
@@ -143,9 +148,8 @@ foreign export ccall get_num_pipes :: GameDataPtr -> IO CInt
 
 update_state :: GameDataPtr -> IO ()
 update_state p = do 
-    gen <- getStdGen
     game <- peek p
-    let newGame = evalState (updateState game) gen
+    let newGame = evalState (updateState game) $ gen game
     poke p newGame
 
 updateState ::GameData -> State StdGen GameData

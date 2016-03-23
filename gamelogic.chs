@@ -9,7 +9,7 @@ import Control.Applicative
 import Foreign.Marshal.Array
 import System.Random
 import Control.Monad.Trans.State
-#include "gamestructs.h"
+#include "gamelogic.h"
 
 data Pipe = Pipe { xPos :: Int, topEnd :: Int, bottomStart :: Int} deriving (Show)
 {#pointer *Pipe as PipePtr -> Pipe#}

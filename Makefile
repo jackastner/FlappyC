@@ -1,33 +1,35 @@
-LINKS=-lSDL2_image-2.0 -lSDL2 -lSDL2_ttf
-EXECUTABLE=Flappy
-HSC=ghc
-HSC_OPTIONS=-O
+OBJECT_FILES= gamelogic_c.o controllerlogic.o drawlogic.o gamelogic.o main.o
+C2HS_TRASH=gamelogic.hs gamelogic.chi gamelogic.chs.h
+HS_TRASH=gamelogic.hi gamelogic_stub.h
 
-$(EXECUTABLE): main.o drawlogic.o controllerlogic.o gamelogic_c.o
-	$(HSC) $(HSC_OPTIONS) --make -no-hs-main main.o drawlogic.o controllerlogic.o gamelogic_c.o gamelogic -o $(EXECUTABLE) $(LINKS)
 
-main.o: main.c  gamelogic.h drawlogic.h controllerlogic.h
-	$(HSC) -c $(HSC_OPTIONS) main.c
+EXECUTABLE=FlappyBird
+LINKS=-lSDL2_ttf -lSDL2_image -lSDL2
+PACKAGES=-package transformers -package random 
 
-drawlogic.o: drawlogic.c drawlogic.h gamelogic.h
-	$(HSC) -c $(HSC_OPTIONS) drawlogic.c
+$(EXECUTABLE): $(OBJECT_FILES)
+	ghc -no-hs-main -o $(EXECUTABLE) $(OBJECT_FILES) $(PACKAGES) $(LINKS) 
+
 
 controllerlogic.o: controllerlogic.c controllerlogic.h gamelogic.h
-	$(HSC) -c $(HSC_OPTIONS) controllerlogic.c
+	gcc -c controllerlogic.c
 
-gamelogic_c.o: gamelogic.c gamelogic.h
-	$(HSC) -c $(HSC_OPTIONS) -o gamelogic_c.o gamelogic.c
-
-gamelogic.o gamelogic_stub.h: gamelogic.hs
-	$(HSC) -c $(HSC_OPTIONS) gamelogic.hs
-
-gamelogic.h: gamestructs.h gamelogic_stub.h
-
-gamelogic.hs: gamelogic.chs gamestructs.h
-	c2hs gamelogic.chs
+drawlogic.o: drawlogic.c drawlogic.h gamelogic.h
+	gcc -c drawlogic.c
 	
-test-haskell: gamelogic.hs
-	ghci -fobject-code gamelogic.hs
+gamelogic_c.o: gamelogic.c gamelogic.h 
+	gcc -c -o gamelogic_c.o gamelogic.c
+
+main.o: main.c drawlogic.h controllerlogic.h gamelogic.h
+	gcc -c main.c -I`ghc --print-libdir`/include/
+
+
+gamelogic.hs: gamelogic.chs gamelogic.h
+	c2hs gamelogic.chs
+
+gamelogic.o: gamelogic.hs
+	ghc -c gamelogic.hs
+
 
 clean:
-	rm -f Flappy gamelogic.chi gamelogic.chs.h gamelogic.hi gamelogic_stub.h gamelogic.hs main.o controllerlogic.o drawlogic.o gamelogic_c.o gamelogic.o 
+	rm -f $(OBJECT_FILES) $(C2HS_TRASH) $(HS_TRASH) $(EXECUTABLE)

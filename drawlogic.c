@@ -252,8 +252,8 @@ void render_score(GameData* data, DrawConfig* config){
 void render_bird(GameData* data, DrawConfig* config){
     SDL_Rect source = config->bird_texture_array[config->bird_index];
     SDL_Rect dest = {
-        scale_x_to_userspace(data,config,get_bird_x(data)),
-        scale_y_to_userspace(data,config,get_bird_y(data)),
+        scale_x_to_userspace(data,config,get_bird_x(data)) - 16,
+        scale_y_to_userspace(data,config,get_bird_y(data)) - 16,
         32, /*Prolly shouldn't hardcode this*/
         32
     };

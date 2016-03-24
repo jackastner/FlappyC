@@ -103,10 +103,10 @@ initialGameState g = resetState $  GameData {
         stageWidth  = 100,
         stageHeight = 100,
 
-        birdHeight = 5,
-        birdWidth = 5,
+        birdHeight = 8,
+        birdWidth = 10,
         
-        pipeWidth = 8,
+        pipeWidth = 14,
         pipeInterval = (100+2*8)`div`2,
         pipeV = 2,
         gen = g,

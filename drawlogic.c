@@ -10,20 +10,28 @@ struct DrawConfig {
     SDL_Renderer* renderer;
     SDL_Window* window;
 
-    SDL_Texture* bird_texture;
+    SDL_Texture* bird_sprite_sheet;
+    SDL_Rect bird_texture_array[BIRD_SPRITE_NUM];
     SDL_Texture* background_texture;
     SDL_Texture* pipe_texture;
     SDL_Texture* pipe_top_texture;
 
     TTF_Font* game_font;
 
+    Uint32 bird_tick_length;
+    Uint32 last_bird_change;
+    int bird_index;
+
     int window_width;
     int window_height;
-
 };
 
 DrawConfig *create_DrawConfig(){
     DrawConfig* config = malloc(sizeof(DrawConfig));
+
+    config->bird_tick_length = 100;
+    config->last_bird_change = 0;
+    config->bird_index = 0;
 
     config->window_width  = 500;
     config->window_height = 500;
@@ -57,11 +65,18 @@ DrawConfig *create_DrawConfig(){
     /*
      * Load image files using SDL_image.
      */
-    char* bird_path =  "resources/images/bird.png";
-    config->bird_texture = IMG_LoadTexture(config->renderer,bird_path);
-    if(config->bird_texture == NULL){
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"Image at \"%s\" failed to load: %s\n",bird_path,IMG_GetError());
-    } 
+    char* bird_sheet_path = "resources/images/bird_sheet.png";
+    config->bird_sprite_sheet = IMG_LoadTexture(config->renderer,bird_sheet_path);
+    if(config->bird_sprite_sheet == NULL){
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"Image at \"%s\" failed to load: %s\n",bird_sheet_path,IMG_GetError());
+    }
+    for(int i = 0; i < BIRD_SPRITE_NUM; i++){
+        /*32 is a magic number. Woops!*/
+        config->bird_texture_array[i].x = 32 * i;
+        config->bird_texture_array[i].y = 0;
+        config->bird_texture_array[i].w = 32;
+        config->bird_texture_array[i].h = 32;
+    }
 
     char* background_path = "resources/images/background.png";
     config->background_texture = IMG_LoadTexture(config->renderer,background_path);
@@ -98,7 +113,7 @@ void destroy_DrawConfig(DrawConfig* config){
      */
     SDL_DestroyWindow(config->window);
     SDL_DestroyRenderer(config->renderer);
-    SDL_DestroyTexture(config->bird_texture);
+    SDL_DestroyTexture(config->bird_sprite_sheet);
     SDL_DestroyTexture(config->background_texture);
     SDL_DestroyTexture(config->pipe_texture);
     SDL_DestroyTexture(config->pipe_top_texture);
@@ -133,7 +148,7 @@ void render_all_pipes(GameData* data, DrawConfig* config){
 void render_pipe(GameData* data, DrawConfig* config, Pipe* pipe){
 
     /*
-      * Query pipe textures for their height and width;
+     * Query pipe textures for their height and width;
      */
     int pipe_top_texture_h, pipe_top_texture_w = scale_x_to_userspace(data, config, get_pipe_width(data));
     if(SDL_QueryTexture(config->pipe_top_texture, NULL, NULL, NULL, &pipe_top_texture_h) != 0){
@@ -235,27 +250,23 @@ void render_score(GameData* data, DrawConfig* config){
 
 
 void render_bird(GameData* data, DrawConfig* config){
-
-    /*
-     * Query Bird image for it's width and heignt
-     */
-    int bird_w,bird_h;
-    if(SDL_QueryTexture(config->bird_texture, NULL, NULL, &bird_w, &bird_h) != 0){
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"Error on query of bird texture: %s\n",SDL_GetError());
-    }
-
-    /*
-     * Specifiy where in the window the bird will be rendered.
-     */
-    SDL_Rect dest_rect = {
-        scale_x_to_userspace(data,config,get_bird_x(data)) - (bird_w / 2),
-        scale_y_to_userspace(data,config,get_bird_y(data)) - (bird_h / 2),
-        bird_w,
-        bird_h
+    SDL_Rect source = config->bird_texture_array[config->bird_index];
+    SDL_Rect dest = {
+        scale_x_to_userspace(data,config,get_bird_x(data)) - 16,
+        scale_y_to_userspace(data,config,get_bird_y(data)) - 16,
+        32, /*Prolly shouldn't hardcode this*/
+        32
     };
 
-    if(SDL_RenderCopy(config->renderer,config->bird_texture,NULL,&dest_rect) != 0){
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"Error Rendering bird texture: %s\n",SDL_GetError());
+    if(SDL_RenderCopyEx(config->renderer,config->bird_sprite_sheet,&source,&dest,0,NULL,SDL_FLIP_HORIZONTAL) != 0){
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"Error Rendering bird texture %d: %s\n",config->bird_index, SDL_GetError());
+    }
+
+
+    Uint32 currentTime = SDL_GetTicks();
+    if(SDL_TICKS_PASSED(currentTime,config->last_bird_change + config->bird_tick_length)){
+        config->last_bird_change = currentTime;
+        config->bird_index = (config->bird_index + 1)%BIRD_SPRITE_NUM;
     }
 }
 

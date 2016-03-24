@@ -4,6 +4,8 @@
 #include <SDL2/SDL.h>
 #include "gamelogic.h"
 
+#define BIRD_SPRITE_NUM 4 
+
 typedef struct DrawConfig DrawConfig;
 
 DrawConfig *create_DrawConfig();

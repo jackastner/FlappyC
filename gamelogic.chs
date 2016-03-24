@@ -186,8 +186,8 @@ isGameOver game@GameData{birdY=y,stageHeight=h,pipeArray=pipes} = y < 0 || y >= 
 
 pipeCollision :: GameData -> Pipe -> Bool
 pipeCollision game pipe = xHit && yHit
-    where xHit = (birdX game) > (xPos pipe) - (pipeWidth game - birdWidth game)`div`2 &&
-                 (birdX game) < (xPos pipe) + (pipeWidth game + birdWidth game)`div`2
+    where xHit = (birdX game) > (xPos pipe) - (pipeWidth game)`div`2 - (birdWidth game)`div`2 &&
+                 (birdX game) < (xPos pipe) + (pipeWidth game)`div`2 + (birdWidth game)`div`2
           yHit = (birdY game) > bottomStart pipe - (birdHeight game)`div`2 ||
                  (birdY game) < topEnd pipe + (birdHeight game)`div`2
 

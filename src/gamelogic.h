@@ -1,6 +1,8 @@
 #ifndef GAME_LOGIC_H
 #define GAME_LOGIC_H
 
+#define FLAP_V -5
+
 /*
  * Public interface
  */
@@ -30,6 +32,7 @@ void update_state(GameData* data);
 /*
  * access method for use by the view
  */
+int get_bird_v(GameData* data);
 int get_bird_y(GameData* data);
 int get_bird_x(GameData* data);
 int get_bird_height(GameData* data);

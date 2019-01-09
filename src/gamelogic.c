@@ -70,7 +70,7 @@ void reset_state(GameData* data){
      */
     data->bird_x = 50;
     data->bird_y = 50;
-    data->bird_v = -5;
+    data->bird_v = FLAP_V;
 
     data->score = 0;
 
@@ -120,7 +120,11 @@ void update_state(GameData* data){
 }
 
 void flap_bird(GameData* data){
-    data->bird_v = -5;
+    data->bird_v = FLAP_V;
+}
+
+int get_bird_v(GameData* data){
+    return data->bird_v;
 }
 
 int get_bird_y(GameData* data){

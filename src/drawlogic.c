@@ -29,6 +29,7 @@ struct DrawConfig {
     Uint32 bird_tick_length;
     Uint32 last_bird_change;
     int bird_index;
+    int animate_bird;
 
     int window_width;
     int window_height;
@@ -40,6 +41,7 @@ DrawConfig *create_DrawConfig(){
     config->bird_tick_length = 100;
     config->last_bird_change = 0;
     config->bird_index = 0;
+    config->animate_bird = 0;
 
     config->window_width  = 500;
     config->window_height = 500;
@@ -258,6 +260,11 @@ void render_score(GameData* data, DrawConfig* config){
 
 
 void render_bird(GameData* data, DrawConfig* config){
+    
+    if(!config->animate_bird && get_bird_v(data) <= FLAP_V){
+        config->animate_bird = 1;
+    }
+
     SDL_Rect source = config->bird_texture_array[config->bird_index];
     SDL_Rect dest = {
         scale_x_to_userspace(data,config,get_bird_x(data)) - 16,
@@ -272,9 +279,13 @@ void render_bird(GameData* data, DrawConfig* config){
 
 
     Uint32 currentTime = SDL_GetTicks();
-    if(SDL_TICKS_PASSED(currentTime,config->last_bird_change + config->bird_tick_length)){
+    if(config->animate_bird && SDL_TICKS_PASSED(currentTime,config->last_bird_change + config->bird_tick_length)){
         config->last_bird_change = currentTime;
-        config->bird_index = (config->bird_index + 1)%BIRD_SPRITE_NUM;
+        config->bird_index = (config->bird_index + 1);
+        if(config->bird_index >= BIRD_SPRITE_NUM){
+            config->bird_index = 0;
+            config->animate_bird = 0;
+        }
     }
 }
 

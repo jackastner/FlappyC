@@ -341,7 +341,11 @@ void render_gameover_message(GameData* data, DrawConfig* config){
      * Create texture for and rendure gamover message prompting the player
      * to play again.
      */
+    #ifdef __ANDROID__
+    char* again_str = "Touch Anywhere to Play Again";
+    #else
     char* again_str = "Press Space to Play Again";
+    #endif
 
     SDL_Surface *again_surface;
     again_surface = TTF_RenderText_Solid(config->game_font,again_str,color);

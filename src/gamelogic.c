@@ -33,9 +33,9 @@ GameData *create_GameData(){
 
     data->stage_width = 100;
     data->stage_height = 100;
-    data->bird_width = 10;
-    data->bird_height = 8;
-    data->pipe_width = 14;
+    data->bird_width = 9;
+    data->bird_height = 7;
+    data->pipe_width = 13;
     data->pipe_v = 2;
 
     data->pipe_interval = (data->stage_width + 2*data->pipe_width) / 2;

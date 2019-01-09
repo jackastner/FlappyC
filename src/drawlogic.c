@@ -68,6 +68,11 @@ DrawConfig *create_DrawConfig(){
     }
 
     /*
+     * Update config params with actual sizes after window creation.
+     */
+    SDL_GetWindowSize(config->window, &(config->window_width), &(config->window_height));
+
+    /*
      * Set the windows title
      */
     SDL_SetWindowTitle(config->window,"Flappy Bird");
@@ -265,12 +270,15 @@ void render_bird(GameData* data, DrawConfig* config){
         config->animate_bird = 1;
     }
 
+    int scaled_bird_width = scale_x_to_userspace(data, config, get_bird_width(data));
+    int scaled_bird_height = scale_y_to_userspace(data, config, get_bird_height(data));
+
     SDL_Rect source = config->bird_texture_array[config->bird_index];
     SDL_Rect dest = {
-        scale_x_to_userspace(data,config,get_bird_x(data)) - 16,
-        scale_y_to_userspace(data,config,get_bird_y(data)) - 16,
-        32, /*Prolly shouldn't hardcode this*/
-        32
+        scale_x_to_userspace(data,config,get_bird_x(data)) - scaled_bird_width / 2,
+        scale_y_to_userspace(data,config,get_bird_y(data)) - scaled_bird_height/ 2,
+        scaled_bird_width,
+        scaled_bird_height
     };
 
     if(SDL_RenderCopyEx(config->renderer,config->bird_sprite_sheet,&source,&dest,0,NULL,SDL_FLIP_HORIZONTAL) != 0){

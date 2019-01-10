@@ -141,11 +141,17 @@ void destroy_DrawConfig(DrawConfig* config){
 }
 
 void render_background(GameData* data, DrawConfig* config){
+    /* prevent vertical stretching of background texture by limiting src height
+     * to the height of the background texture */
+    int bg_height;
+    SDL_QueryTexture(config->background_texture, NULL, NULL, NULL, &bg_height);
+    bg_height = bg_height > config->window_height ? config->window_height : bg_height;
+
     SDL_Rect source_rect = {
         0,
         0,
         config->window_width,
-        config->window_height
+        bg_height
     };
 
     if(SDL_RenderCopy(config->renderer,config->background_texture,&source_rect,NULL) != 0){

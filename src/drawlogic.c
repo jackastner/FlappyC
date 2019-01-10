@@ -34,6 +34,8 @@ struct DrawConfig {
 
     int window_width;
     int window_height;
+
+    SDL_Rect** button_rects;
 };
 
 DrawConfig *create_DrawConfig(){
@@ -135,19 +137,34 @@ DrawConfig *create_DrawConfig(){
     if(config->game_font == NULL){
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"Font at \"%s\" failed to load: %s\n",font_path,TTF_GetError());
     }
+
+    config->button_rects = calloc(BUTTONS_COUNT, sizeof(SDL_Rect*));
     return config;
+}
+
+SDL_Rect** get_button_rects(DrawConfig* config){
+    return config->button_rects;
 }
 
 void destroy_DrawConfig(DrawConfig* config){
     /*
      * Destroy SDL resources and quit SDL + related libraries.
      */
-    SDL_DestroyWindow(config->window);
-    SDL_DestroyRenderer(config->renderer);
+
     SDL_DestroyTexture(config->bird_sprite_sheet);
     SDL_DestroyTexture(config->background_texture);
     SDL_DestroyTexture(config->pipe_texture);
     SDL_DestroyTexture(config->pipe_top_texture);
+    SDL_DestroyRenderer(config->renderer);
+    SDL_DestroyWindow(config->window);
+
+    for(int i = 0; i < BUTTONS_COUNT; i ++){
+        if(config->button_rects[i] != NULL){
+            free(config->button_rects[i]);
+        }
+    }
+    free(config->button_rects);
+
     TTF_CloseFont(config->game_font);
     TTF_Quit();
     IMG_Quit();
@@ -371,21 +388,29 @@ void render_gameover_message(GameData* data, DrawConfig* config){
     sprintf(score_str, "You lost with a score of %d", get_score(data));
     render_string(config, score_str, config->window_width / 2, config->window_height / 4);
 
-    render_button(config, "Play", config->window_width / 4, 3 * config->window_height / 4);
-    render_button(config, "Quit", 3 * config->window_width / 4, 3 * config->window_height / 4);
+    render_button(config, "Play", PLAY, config->window_width / 4, 3 * config->window_height / 4);
+    render_button(config, "Quit", QUIT, 3 * config->window_width / 4, 3 * config->window_height / 4);
 }
 
-void render_button(DrawConfig* config, char* str, int center_x, int center_y){
-    int text_w, text_h;
-    TTF_SizeText(config->game_font, str, &text_w, &text_h);
+void render_button(DrawConfig* config, char* str, Button button_id, int center_x, int center_y){
 
-    SDL_Rect button_rect = {
-        center_x - (text_w / 2) - text_h,
-        center_y - text_h,
-        text_w + 2 * text_h,
-        2 * text_h
-    };
-    if(SDL_RenderCopyEx(config->renderer,config->button_texture,NULL,&button_rect,0,NULL,0) != 0){
+    SDL_Rect* button_rect;
+    if(config->button_rects[button_id] == NULL){
+        int text_w, text_h;
+        TTF_SizeText(config->game_font, str, &text_w, &text_h);
+
+        button_rect = malloc(sizeof(SDL_Rect));
+        button_rect->x = center_x - (text_w / 2) - text_h;
+        button_rect->y = center_y - text_h;
+        button_rect->w = text_w + 2 * text_h;
+        button_rect->h = 2 * text_h;
+
+        config->button_rects[button_id] = button_rect;
+    } else {
+        button_rect = config->button_rects[button_id];
+    }
+    
+    if(SDL_RenderCopyEx(config->renderer,config->button_texture,NULL,button_rect,0,NULL,0) != 0){
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"Error Rendering button texture: %s\n",SDL_GetError());
     }
 

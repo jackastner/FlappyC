@@ -1,5 +1,6 @@
 #include "controllerlogic.h"
 #include "gamelogic.h"
+#include "drawlogic.h"
 #include <time.h>
 #include <stdlib.h>
 
@@ -31,7 +32,7 @@ void destroy_ControllerState(ControllerState* controller){
     free(controller);
 }
 
-int try_controller(GameData* data,ControllerState* controller){
+int try_controller(GameData* data,ControllerState* controller, DrawConfig* config){
     /*
      * Quit events need to be handled separately from others events.
      * assume that SDL has been initialized by the view
@@ -45,7 +46,7 @@ int try_controller(GameData* data,ControllerState* controller){
     if(!is_gameover(data)){
         control_game(data,controller);
     } else { 
-        control_menu(data,controller);
+        return control_menu(data, controller, config);
     }
 
     return  1;
@@ -91,8 +92,7 @@ void proccese_game_event(GameData* data,ControllerState* controller){
     }
 }
 
-
-void control_menu(GameData* data,ControllerState* controller){
+int control_menu(GameData* data,ControllerState* controller, DrawConfig* config){
     /*
      * Obtain current SDL ticks 
      */
@@ -102,24 +102,40 @@ void control_menu(GameData* data,ControllerState* controller){
      * Modify menue state based on user input if enough time has passed
      */
     if(SDL_TICKS_PASSED(currentTime,controller->last_user_input + controller->poll_interval)){ 
-        proccese_menu_event(data,controller);
         controller->last_user_input = currentTime;
+        return proccese_menu_event(data,controller, config);
     }
-
+    return 1;
 }
 
-void proccese_menu_event(GameData* data,ControllerState* controller){
+int handle_button_click(GameData* data, ControllerState* controller, Button button){
+    switch(button) {
+        case PLAY:
+            reset_state(data);
+            return 1;
+        case QUIT:
+            return 0;
+        default:
+            return 1;
+    }
+    return 1;
+}
+
+int proccese_menu_event(GameData* data, ControllerState* controller, DrawConfig* config){
     SDL_Event event;
     while(SDL_PeepEvents(&event,1,SDL_GETEVENT,SDL_FIRSTEVENT,SDL_LASTEVENT)){
         switch (event.type) {
-            case SDL_KEYDOWN:
-                if(event.key.keysym.sym != SDLK_SPACE){
-                    break;
+            case SDL_MOUSEBUTTONDOWN: {
+                SDL_Point p = {event.button.x, event.button.y};
+                SDL_Rect** rects = get_button_rects(config);
+                for(int i = 0; i < BUTTONS_COUNT; i++){
+                    if(rects[i] != NULL && SDL_PointInRect(&p, rects[i])){
+                        return handle_button_click(data, controller, i);
+                    }
                 }
-                //fallthrough
-            case SDL_FINGERDOWN:
-                reset_state(data);
                 break;
+            }
         }
     }
+    return 1;
 }

@@ -23,6 +23,7 @@ struct DrawConfig {
     SDL_Texture* background_texture;
     SDL_Texture* pipe_texture;
     SDL_Texture* pipe_top_texture;
+    SDL_Texture* button_texture;
 
     TTF_Font* game_font;
 
@@ -109,6 +110,12 @@ DrawConfig *create_DrawConfig(){
     config->pipe_top_texture = IMG_LoadTexture(config->renderer,pipetop_path);
     if(config->pipe_top_texture == NULL){
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"Image at \"%s\" failed to load: %s\n",pipetop_path,IMG_GetError());
+    }
+
+    char* button_path = "resources/images/button.png";
+    config->button_texture = IMG_LoadTexture(config->renderer,button_path);
+    if(config->button_texture == NULL){
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"Image at \"%s\" failed to load: %s\n",button_path,IMG_GetError());
     }
 
     float defualt_dpi = 72;
@@ -242,11 +249,9 @@ void render_pipe(GameData* data, DrawConfig* config, Pipe* pipe){
 }
 
 void render_score(GameData* data, DrawConfig* config){
-    SDL_Color color={0,0,0};
-
     char score_str[9];
     sprintf(score_str, "%d", get_score(data));
-    render_string(config, color, score_str, config->window_width / 2, config->window_height / 10);
+    render_string(config, score_str, config->window_width / 2, config->window_height / 10);
 }
 
 void render_bird(GameData* data, DrawConfig* config){
@@ -282,9 +287,51 @@ void render_bird(GameData* data, DrawConfig* config){
     }
 }
 
-void render_string(DrawConfig* config, SDL_Color color, char* str, int center_x, int center_y){
+void render_outline(DrawConfig* config, char* str, int center_x, int center_y){
+    SDL_Color outline_color = {0, 0, 0};
+
+    TTF_SetFontOutline(config->game_font, 2);
+
     SDL_Surface *str_surface;
-    str_surface = TTF_RenderText_Solid(config->game_font, str, color);
+    str_surface = TTF_RenderText_Blended(config->game_font, str, outline_color);
+    if(str_surface == NULL){
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Error rendering text \"%s\": %s\n", str, TTF_GetError());
+    }
+
+    SDL_Texture *str_texture = SDL_CreateTextureFromSurface(config->renderer,str_surface);
+    if(str_texture == NULL){
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Error creating texture for text \"%s\": %s\n", str, SDL_GetError());
+    }
+
+    int str_width, str_height;
+    if(TTF_SizeText(config->game_font, str, &str_width, &str_height) != 0){
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Error on query of texture for text \"%s\": %s\n", str, SDL_GetError());
+    }
+
+    TTF_SetFontOutline(config->game_font, 0);
+
+    SDL_Rect str_rect = {
+        center_x - (str_width / 2),
+        center_y - (str_height / 2) - 1,
+        str_width,
+        str_height
+    };
+
+    if(SDL_RenderCopy(config->renderer,str_texture,NULL,&str_rect) != 0){
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Error rendering surface for text \"%s\": %s\n", str, SDL_GetError());
+    }
+
+    SDL_DestroyTexture(str_texture);
+    SDL_FreeSurface(str_surface);
+
+}
+
+void render_string(DrawConfig* config, char* str, int center_x, int center_y){
+    SDL_Color color={255,255,255};
+
+    render_outline(config, str, center_x, center_y);
+    SDL_Surface *str_surface;
+    str_surface = TTF_RenderText_Blended(config->game_font, str, color);
     if(str_surface == NULL){
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Error rendering text \"%s\": %s\n", str, TTF_GetError());
     }
@@ -315,7 +362,6 @@ void render_string(DrawConfig* config, SDL_Color color, char* str, int center_x,
 }
 
 void render_gameover_message(GameData* data, DrawConfig* config){
-    SDL_Color color={0,0,0};
     
     /*
      * Create texture for and render a gameover message containing the final
@@ -323,20 +369,29 @@ void render_gameover_message(GameData* data, DrawConfig* config){
      */
     char score_str[35];
     sprintf(score_str, "You lost with a score of %d", get_score(data));
-    render_string(config, color, score_str, config->window_width / 2, config->window_height / 4);
+    render_string(config, score_str, config->window_width / 2, config->window_height / 4);
 
-    /*
-     * Create texture for and rendure gamover message prompting the player
-     * to play again.
-     */
-    #ifdef __ANDROID__
-    char* again_str = "Touch Anywhere to Play Again";
-    #else
-    char* again_str = "Press Space to Play Again";
-    #endif
-    render_string(config, color, again_str, config->window_width / 2, config->window_height / 2);
+    render_button(config, "Play", config->window_width / 4, 3 * config->window_height / 4);
+    render_button(config, "Quit", 3 * config->window_width / 4, 3 * config->window_height / 4);
 }
 
+void render_button(DrawConfig* config, char* str, int center_x, int center_y){
+    int text_w, text_h;
+    TTF_SizeText(config->game_font, str, &text_w, &text_h);
+
+    SDL_Rect button_rect = {
+        center_x - (text_w / 2) - text_h,
+        center_y - text_h,
+        text_w + 2 * text_h,
+        2 * text_h
+    };
+    if(SDL_RenderCopyEx(config->renderer,config->button_texture,NULL,&button_rect,0,NULL,0) != 0){
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"Error Rendering button texture: %s\n",SDL_GetError());
+    }
+
+    render_string(config, str, center_x, center_y);
+}
+    
 void render_clear(DrawConfig* config){
     if(SDL_SetRenderDrawColor(config->renderer, 0xFF, 0xFF, 0xFF, 0xFF) != 0){
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"Error setting render color to white (FF,FF,FF,FF): %s\n",SDL_GetError());

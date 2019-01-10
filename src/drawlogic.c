@@ -111,11 +111,20 @@ DrawConfig *create_DrawConfig(){
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"Image at \"%s\" failed to load: %s\n",pipetop_path,IMG_GetError());
     }
 
+    float defualt_dpi = 72;
+    float dpi;
+    if(SDL_GetDisplayDPI(0, &dpi, NULL, NULL) != 0){
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"Could not obtain display dpi. Using defualt value (72). %s\n",SDL_GetError());
+        dpi = defualt_dpi;
+    }
+    int unscaled_pt = 10;
+    int scaled_pt = (int) ((dpi / defualt_dpi) * unscaled_pt);
+
     /*
      * Load font using TTF_Font
      */
     char* font_path = "resources/fonts/VeraMono.ttf"; 
-    config->game_font = TTF_OpenFont(font_path,24);
+    config->game_font = TTF_OpenFont(font_path,scaled_pt);
     if(config->game_font == NULL){
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"Font at \"%s\" failed to load: %s\n",font_path,TTF_GetError());
     }
@@ -237,42 +246,12 @@ void render_score(GameData* data, DrawConfig* config){
 
     char score_str[9];
     sprintf(score_str, "%d", get_score(data));
-
-    SDL_Surface *text_surface;
-    text_surface = TTF_RenderText_Solid(config->game_font,score_str,color);
-    if(text_surface == NULL){
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"Error rendering text \"%s\": %s\n",score_str,TTF_GetError());
-    }
-
-    SDL_Texture *text_texture = SDL_CreateTextureFromSurface(config->renderer,text_surface);
-    if(text_texture == NULL){
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"Error creating texture for text \"%s\":%s\n",score_str,SDL_GetError());
-    }
-
-    int text_width,text_height;
-    if(SDL_QueryTexture(text_texture,NULL,NULL,&text_width,&text_height)  != 0){
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"Error on query of text texture: %s\n",SDL_GetError());
-    } 
-
-    SDL_Rect dest_rect = {
-        (config->window_width - text_width) / 2,
-        config->window_height/10,
-        text_width,
-        text_height
-    };
-
-    if(SDL_RenderCopy(config->renderer,text_texture,NULL,&dest_rect) != 0){
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"Error Rendering text texture: %s\n",SDL_GetError());
-    }
-
-    SDL_DestroyTexture(text_texture);
-    SDL_FreeSurface(text_surface);
+    render_string(config, color, score_str, config->window_width / 2, config->window_height / 10);
 }
-
 
 void render_bird(GameData* data, DrawConfig* config){
     
-    if(!config->animate_bird && get_bird_v(data) <= FLAP_V){
+    if(!config->animate_bird && get_bird_v(data) <= get_flap_v(data)){
         config->animate_bird = 1;
     }
 
@@ -303,6 +282,38 @@ void render_bird(GameData* data, DrawConfig* config){
     }
 }
 
+void render_string(DrawConfig* config, SDL_Color color, char* str, int center_x, int center_y){
+    SDL_Surface *str_surface;
+    str_surface = TTF_RenderText_Solid(config->game_font, str, color);
+    if(str_surface == NULL){
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Error rendering text \"%s\": %s\n", str, TTF_GetError());
+    }
+
+    SDL_Texture *str_texture = SDL_CreateTextureFromSurface(config->renderer,str_surface);
+    if(str_texture == NULL){
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Error creating texture for text \"%s\": %s\n", str, SDL_GetError());
+    }
+
+    int str_width, str_height;
+    if(SDL_QueryTexture(str_texture, NULL, NULL, &str_width, &str_height) != 0){
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Error on query of texture for text \"%s\": %s\n", str, SDL_GetError());
+    }
+
+    SDL_Rect str_rect = {
+        center_x - (str_width / 2),
+        center_y - (str_height / 2),
+        str_width,
+        str_height
+    };
+
+    if(SDL_RenderCopy(config->renderer,str_texture,NULL,&str_rect) != 0){
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Error rendering surface for text \"%s\": %s\n", str, SDL_GetError());
+    }
+
+    SDL_DestroyTexture(str_texture);
+    SDL_FreeSurface(str_surface);
+}
+
 void render_gameover_message(GameData* data, DrawConfig* config){
     SDL_Color color={0,0,0};
     
@@ -310,38 +321,9 @@ void render_gameover_message(GameData* data, DrawConfig* config){
      * Create texture for and render a gameover message containing the final
      * score.
      */
-
     char score_str[35];
     sprintf(score_str, "You lost with a score of %d", get_score(data));
-
-    SDL_Surface *score_surface;
-    score_surface = TTF_RenderText_Solid(config->game_font,score_str,color);
-    if(score_surface == NULL){
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"Error rendering text \"%s\": %s\n",score_str,TTF_GetError());
-    }
-    SDL_Texture *score_texture = SDL_CreateTextureFromSurface(config->renderer,score_surface);
-    if(score_texture == NULL){
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"Error creating texture for text \"%s\": %s\n",score_str,SDL_GetError());
-    }
-
-    int score_width,score_height;
-    if(SDL_QueryTexture(score_texture,NULL,NULL,&score_width,&score_height) != 0){
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"Error on query of texture for text \"%s\": %s\n",score_str,SDL_GetError());
-    }
-
-    SDL_Rect score_rect = {
-        (config->window_width - score_width) / 2,
-        config->window_height/4,
-	score_width,
-        score_height
-    };
-
-    if(SDL_RenderCopy(config->renderer,score_texture,NULL,&score_rect) != 0){
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"Error rendering surface for text \"%s\": %s\n",score_str,SDL_GetError());
-    }
-
-    SDL_DestroyTexture(score_texture);
-    SDL_FreeSurface(score_surface);
+    render_string(config, color, score_str, config->window_width / 2, config->window_height / 4);
 
     /*
      * Create texture for and rendure gamover message prompting the player
@@ -352,36 +334,7 @@ void render_gameover_message(GameData* data, DrawConfig* config){
     #else
     char* again_str = "Press Space to Play Again";
     #endif
-
-    SDL_Surface *again_surface;
-    again_surface = TTF_RenderText_Solid(config->game_font,again_str,color);
-    if(again_surface == NULL){
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"Error rendering text \"%s\": %s\n",again_str,TTF_GetError());
-    }
-
-    SDL_Texture *again_texture = SDL_CreateTextureFromSurface(config->renderer,again_surface);
-    if(again_texture == NULL){
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"Error creating texture for text \"%s\": %s\n",again_str,SDL_GetError());
-    }
-   
-    int again_width,again_height;
-    if(SDL_QueryTexture(again_texture,NULL,NULL,&again_width,&again_height) != 0){
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"Error on query of texture for text \"%s\": %s\n",again_str,SDL_GetError());
-    }
-
-    SDL_Rect again_rect = {
-        (config->window_width - again_width) / 2,
-        config->window_height/2,
-        again_width,
-        again_height
-    };
-
-    if(SDL_RenderCopy(config->renderer,again_texture,NULL,&again_rect) != 0){
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"Error rendering surface for text \"%s\": %s\n",again_str,SDL_GetError());
-    }
-
-    SDL_DestroyTexture(again_texture);
-    SDL_FreeSurface(again_surface);
+    render_string(config, color, again_str, config->window_width / 2, config->window_height / 2);
 }
 
 void render_clear(DrawConfig* config){
@@ -402,7 +355,6 @@ int scale_y_to_userspace(GameData* data, DrawConfig* config, int y){
     double y_scale_factor = config->window_height / get_stage_height(data);
     return (y * y_scale_factor);
 }
-
 
 void render_game(GameData* data, DrawConfig* config){
     /*

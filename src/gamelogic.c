@@ -21,6 +21,9 @@ struct GameData {
     int bird_x;
     int bird_y;
 
+    int bird_a;
+    int flap_v;
+
     Pipe *pipe_array;
 };
 
@@ -36,7 +39,10 @@ GameData *create_GameData(){
     data->bird_width = 9;
     data->bird_height = 7;
     data->pipe_width = 13;
-    data->pipe_v = 2;
+    data->pipe_v = 3;
+
+    data->flap_v = -6;
+    data->bird_a = 2;
 
     data->pipe_interval = (data->stage_width + 2*data->pipe_width) / 2;
 
@@ -70,7 +76,7 @@ void reset_state(GameData* data){
      */
     data->bird_x = 50;
     data->bird_y = 50;
-    data->bird_v = FLAP_V;
+    data->bird_v = data->flap_v;
 
     data->score = 0;
 
@@ -102,8 +108,8 @@ void update_state(GameData* data){
     /*
      * Move bird and update velocity
      */
-    data->bird_y+=data->bird_v;
-    data->bird_v++;
+    data->bird_y += data->bird_v;
+    data->bird_v += data->bird_a;
 
     /*
      * Move pipes forward
@@ -120,8 +126,13 @@ void update_state(GameData* data){
 }
 
 void flap_bird(GameData* data){
-    data->bird_v = FLAP_V;
+    data->bird_v = data->flap_v;
 }
+
+int get_flap_v(GameData* data){
+    return data->flap_v;
+}
+
 
 int get_bird_v(GameData* data){
     return data->bird_v;

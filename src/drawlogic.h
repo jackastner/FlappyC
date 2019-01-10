@@ -28,6 +28,7 @@ void render_score(GameData* data, DrawConfig* config);
 void render_bird(GameData* data, DrawConfig* config);
 void render_gameover_message(GameData* data, DrawConfig* config);
 void render_clear(DrawConfig* config);
+void render_string(DrawConfig* config, SDL_Color color, char* str, int center_x, int center_y);
 
 void render_pipe(GameData* data, DrawConfig* config, Pipe* pipe);
 int scale_x_to_userspace(GameData* data, DrawConfig* config, int x);

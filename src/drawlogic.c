@@ -13,6 +13,13 @@
 #include <SDL2/SDL_ttf.h>
 #endif
 
+enum Text {TEXT_PLAY, TEXT_QUIT, TEXT_GAME_OVER, TEXT_COUNT, TEXT_NOT_RENDERED};
+
+static char* prerendered_strs[] = {
+    "Play", // TEXT_PLAY
+    "Quit", // TEXT_QUIT
+    "You lost with a score of ", //TEXT_GAME_OVER
+};
 
 struct DrawConfig {
     SDL_Renderer* renderer;
@@ -24,6 +31,9 @@ struct DrawConfig {
     SDL_Texture* pipe_texture;
     SDL_Texture* pipe_top_texture;
     SDL_Texture* button_texture;
+
+    SDL_Texture* prerendered_text[TEXT_COUNT];
+    SDL_Texture* prerendered_outline[TEXT_COUNT];
 
     TTF_Font* game_font;
 
@@ -138,6 +148,22 @@ DrawConfig *create_DrawConfig(){
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"Font at \"%s\" failed to load: %s\n",font_path,TTF_GetError());
     }
 
+    /*
+     * Render some constant strings ahead of time
+     */
+
+    SDL_Color color={255,255,255};
+    for(int i = 0; i < TEXT_COUNT; i++){
+        texture_of_string(config, color, prerendered_strs[i], &(config->prerendered_text[i]));
+    }
+
+    SDL_Color outline_color = {0, 0, 0};
+    TTF_SetFontOutline(config->game_font, 2);
+    for(int i = 0; i < TEXT_COUNT; i++){
+        texture_of_string(config, outline_color, prerendered_strs[i], &(config->prerendered_outline[i]));
+    }
+    TTF_SetFontOutline(config->game_font, 0);
+
     config->button_rects = calloc(BUTTONS_COUNT, sizeof(SDL_Rect*));
     return config;
 }
@@ -155,6 +181,12 @@ void destroy_DrawConfig(DrawConfig* config){
     SDL_DestroyTexture(config->background_texture);
     SDL_DestroyTexture(config->pipe_texture);
     SDL_DestroyTexture(config->pipe_top_texture);
+
+    for(int i = 0; i < TEXT_COUNT; i++){
+        SDL_DestroyTexture(config->prerendered_text[i]);
+        SDL_DestroyTexture(config->prerendered_outline[i]);
+    }
+
     SDL_DestroyRenderer(config->renderer);
     SDL_DestroyWindow(config->window);
 
@@ -304,21 +336,26 @@ void render_bird(GameData* data, DrawConfig* config){
     }
 }
 
+void texture_of_string(DrawConfig* config, SDL_Color color, char* str, SDL_Texture** texture){
+    SDL_Surface *str_surface;
+    str_surface = TTF_RenderText_Blended(config->game_font, str, color);
+    if(str_surface == NULL){
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Error rendering text \"%s\": %s\n", str, TTF_GetError());
+    }
+
+    *texture = SDL_CreateTextureFromSurface(config->renderer,str_surface);
+    if(*texture == NULL){
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Error creating texture for text \"%s\": %s\n", str, SDL_GetError());
+    }
+}
+
 void render_outline(DrawConfig* config, char* str, int center_x, int center_y){
     SDL_Color outline_color = {0, 0, 0};
 
     TTF_SetFontOutline(config->game_font, 2);
 
-    SDL_Surface *str_surface;
-    str_surface = TTF_RenderText_Blended(config->game_font, str, outline_color);
-    if(str_surface == NULL){
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Error rendering text \"%s\": %s\n", str, TTF_GetError());
-    }
-
-    SDL_Texture *str_texture = SDL_CreateTextureFromSurface(config->renderer,str_surface);
-    if(str_texture == NULL){
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Error creating texture for text \"%s\": %s\n", str, SDL_GetError());
-    }
+    SDL_Texture *str_texture;
+    texture_of_string(config, outline_color, str, &str_texture);
 
     int str_width, str_height;
     if(TTF_SizeText(config->game_font, str, &str_width, &str_height) != 0){
@@ -339,24 +376,15 @@ void render_outline(DrawConfig* config, char* str, int center_x, int center_y){
     }
 
     SDL_DestroyTexture(str_texture);
-    SDL_FreeSurface(str_surface);
-
 }
 
 void render_string(DrawConfig* config, char* str, int center_x, int center_y){
     SDL_Color color={255,255,255};
 
     render_outline(config, str, center_x, center_y);
-    SDL_Surface *str_surface;
-    str_surface = TTF_RenderText_Blended(config->game_font, str, color);
-    if(str_surface == NULL){
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Error rendering text \"%s\": %s\n", str, TTF_GetError());
-    }
 
-    SDL_Texture *str_texture = SDL_CreateTextureFromSurface(config->renderer,str_surface);
-    if(str_texture == NULL){
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Error creating texture for text \"%s\": %s\n", str, SDL_GetError());
-    }
+    SDL_Texture *str_texture;
+    texture_of_string(config, color, str, &str_texture);
 
     int str_width, str_height;
     if(SDL_QueryTexture(str_texture, NULL, NULL, &str_width, &str_height) != 0){
@@ -375,29 +403,72 @@ void render_string(DrawConfig* config, char* str, int center_x, int center_y){
     }
 
     SDL_DestroyTexture(str_texture);
-    SDL_FreeSurface(str_surface);
+}
+
+void render_known_string(DrawConfig* config, Text str_id, int center_x, int center_y){
+    SDL_Texture *str_texture = config->prerendered_text[str_id];
+    SDL_Texture *str_outline = config->prerendered_outline[str_id];
+
+    /* render stored outline */
+    int out_w, out_h;
+    if(SDL_QueryTexture(str_outline, NULL, NULL, &out_w, &out_h) != 0){
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Error querying texture: %s\n", SDL_GetError());
+    }
+
+    SDL_Rect out_rect = {
+        center_x - (out_w / 2),
+        center_y - (out_h / 2),
+        out_w,
+        out_h
+    };
+
+    if(SDL_RenderCopy(config->renderer,str_outline,NULL,&out_rect) != 0){
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Error rendering surface for text \"%s\": %s\n", prerendered_strs[str_id], SDL_GetError());
+    }
+
+    /* render stored fill */
+
+    int text_w, text_h;
+    if(SDL_QueryTexture(str_texture, NULL, NULL, &text_w, &text_h) != 0){
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Error querying texture: %s\n", SDL_GetError());
+    }
+    
+    SDL_Rect text_rect = {
+        center_x - (text_w / 2),
+        center_y - (text_h / 2),
+        text_w,
+        text_h
+    };
+
+    if(SDL_RenderCopy(config->renderer,str_texture,NULL,&text_rect) != 0){
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Error rendering surface for text \"%s\": %s\n", prerendered_strs[str_id], SDL_GetError());
+    }
 }
 
 void render_gameover_message(GameData* data, DrawConfig* config){
     
-    /*
-     * Create texture for and render a gameover message containing the final
-     * score.
-     */
-    char score_str[35];
-    sprintf(score_str, "You lost with a score of %d", get_score(data));
-    render_string(config, score_str, config->window_width / 2, config->window_height / 4);
+    render_known_string(config, TEXT_GAME_OVER, config->window_width / 2, config->window_height / 4);
 
-    render_button(config, "Play", PLAY, config->window_width / 4, 3 * config->window_height / 4);
-    render_button(config, "Quit", QUIT, 3 * config->window_width / 4, 3 * config->window_height / 4);
+    char score_str[5];
+    sprintf(score_str, "%d", get_score(data));
+
+    int text_w;
+    if(SDL_QueryTexture(config->prerendered_text[TEXT_GAME_OVER], NULL, NULL, &text_w, NULL) != 0){
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Error querying texture: %s\n", SDL_GetError());
+    }
+
+    render_string(config, score_str, config->window_width / 2 + text_w/2, config->window_height / 4);
+
+    render_button(config, TEXT_PLAY, PLAY, config->window_width / 4, 3 * config->window_height / 4);
+    render_button(config, TEXT_QUIT, QUIT, 3 * config->window_width / 4, 3 * config->window_height / 4);
 }
 
-void render_button(DrawConfig* config, char* str, Button button_id, int center_x, int center_y){
+void render_button(DrawConfig* config, Text str_id, Button button_id, int center_x, int center_y){
 
     SDL_Rect* button_rect;
     if(config->button_rects[button_id] == NULL){
         int text_w, text_h;
-        TTF_SizeText(config->game_font, str, &text_w, &text_h);
+        TTF_SizeText(config->game_font, prerendered_strs[str_id], &text_w, &text_h);
 
         button_rect = malloc(sizeof(SDL_Rect));
         button_rect->x = center_x - (text_w / 2) - text_h;
@@ -414,7 +485,7 @@ void render_button(DrawConfig* config, char* str, Button button_id, int center_x
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"Error Rendering button texture: %s\n",SDL_GetError());
     }
 
-    render_string(config, str, center_x, center_y);
+    render_known_string(config, str_id, center_x, center_y);
 }
     
 void render_clear(DrawConfig* config){

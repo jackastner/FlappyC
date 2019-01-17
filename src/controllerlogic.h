@@ -2,19 +2,27 @@
 #define CONT_LOGIC_H
 
 #include "drawlogic.h"
+#include "gamelogic.h"
 
-typedef struct ControllerState ControllerState;
+class ControllerState {
+        GameData* data;
+        DrawConfig* config;
 
-ControllerState *create_ControllerState();
-void destroy_ControllerState(ControllerState* controller);
+        Uint32 tick_length;
+        Uint32 poll_interval;
+        Uint32 last_user_input;
+        Uint32 last_game_tick;
 
-int try_controller(GameData* data,ControllerState* controller, DrawConfig* config);
+        void control_game();
+        void proccese_game_event();
+        int control_menu();
+        int proccese_menu_event();
+        int handle_button_click(DrawConfig::Button button);
 
-void control_game(GameData* data,ControllerState* controller);
-void proccese_game_event(GameData* data,ControllerState* controller);
+    public:
+        ControllerState(GameData* data, DrawConfig* config);
+        int try_controller();
 
-int control_menu(GameData* data,ControllerState* controller, DrawConfig* config);
-int proccese_menu_event(GameData* data,ControllerState* controller, DrawConfig* config);
-
+};
 
 #endif

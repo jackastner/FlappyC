@@ -12,7 +12,7 @@ SDL_IMAGE_PATH := ../SDK_image
 
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/$(SDL_PATH)/include $(LOCAL_PATH)/$(SDL_TTF_PATH) $(LOCAL_PATH)/$(SDL_IMAGE_PATH)
 
-LOCAL_SRC_FILES := controllerlogic.c drawlogic.c gamelogic.c main.c
+LOCAL_SRC_FILES := controllerlogic.cpp drawlogic.cpp gamelogic.cpp main.cpp
 
 LOCAL_SHARED_LIBRARIES := SDL2 SDL2_ttf SDL2_image
 

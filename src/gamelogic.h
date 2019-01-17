@@ -1,52 +1,61 @@
 #ifndef GAME_LOGIC_H
 #define GAME_LOGIC_H
 
-/*
- * Public interface
- */
+#include <vector>
 
-typedef struct GameData GameData;
-
-typedef struct Pipe Pipe;
 struct Pipe {
+    Pipe(int x, int top_end, int bottom_start);
     int x;
     int top_end;
     int bottom_start;
 };
 
-GameData* create_GameData();
-void destroy_GameData(GameData* data);
+class GameData {
+        int stage_width;
+        int stage_height;
 
+        int bird_width;
+        int bird_height;
 
+        int pipe_width;
+        int pipe_interval;
+        int pipe_v;
 
-/*
- * setter methods for use by the controller
- */
+        int score;
 
-void reset_state(GameData* data);
-void flap_bird(GameData* data);
-void update_state(GameData* data);
+        int bird_v;
+        int bird_x;
+        int bird_y;
 
-/*
- * access method for use by the view
- */
-int get_flap_v(GameData* data);
-int get_bird_v(GameData* data);
-int get_bird_y(GameData* data);
-int get_bird_x(GameData* data);
-int get_bird_height(GameData* data);
-int get_bird_width(GameData* data);
+        int bird_a;
+        int flap_v;
 
-int get_stage_width(GameData* data);
-int get_stage_height(GameData* data);
+        std::vector<Pipe> pipes;
 
-int get_score(GameData* data);
+        int pipe_collision();
 
-int is_gameover(GameData* data);
-int _pipe_collision(GameData* data);
+    public:
+        GameData();
 
-int get_num_pipes(GameData* data);
-Pipe get_pipe(GameData* data, int index);
-int get_pipe_width(GameData* data);
+        void reset_state();
+        void flap_bird();
+        void update_state();
 
+        int get_flap_v(); int get_bird_v();
+        int get_bird_y();
+        int get_bird_x();
+        int get_bird_height();
+        int get_bird_width();
+
+        int get_stage_width();
+        int get_stage_height();
+
+        int get_score();
+
+        int is_gameover();
+
+        int get_num_pipes();
+        Pipe get_pipe(int index);
+        int get_pipe_width();
+};
 #endif
